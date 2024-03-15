@@ -1,6 +1,5 @@
 import pygame
 import sys
-import math
 from pygame import gfxdraw
 
 # Initialize Pygame
@@ -36,57 +35,62 @@ def draw_antialiased_circle(surface, color, center, radius):
     gfxdraw.aacircle(surface, int(center.x), int(center.y), radius, color)
     gfxdraw.filled_circle(surface, int(center.x), int(center.y), radius, color)
 
+def bounce_process():
+    global ball_pos, ball_speed, ball_radius
+    
+    # Apply gravity to vertical speed
+    ball_speed += gravity
+
+    # Move the ball
+    ball_pos += ball_speed
+
+    # Collision detection and response
+    direction = ball_pos - border_center
+    distance_from_center = direction.length()
+
+    if distance_from_center > border_radius - ball_radius:
+        # Calculate the normal at the point of contact
+        normal = direction.normalize()
+
+        # Reflect the ball's speed vector over the normal
+        ball_speed.reflect_ip(normal)
+
+        # Apply energy loss
+        ball_speed *= energy_loss
+
+        # Grow the ball
+        ball_radius = int(ball_radius * ball_growth)
+
+        # Correct the position so the ball is exactly on the border
+        overlap = distance_from_center + ball_radius - border_radius
+        ball_pos -= overlap * normal
+
+    # Clear the screen
+    screen.fill(BLACK)
+
+    # Draw the border with anti-aliasing
+    draw_antialiased_circle(screen, WHITE, border_center, border_radius)
+    # Draw the border outline
+    pygame.draw.circle(screen, WHITE, border_center, border_radius, border_thickness)
+
+    # Draw the ball with anti-aliasing
+    draw_antialiased_circle(screen, RED, ball_pos, ball_radius)
+
+    # Flip the display
+    pygame.display.flip()
+
 # Main loop
 running = True
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-
-    # Apply gravity to vertical speed
-    ball_speed += gravity
+            running = False
     
-    # Move the ball
-    ball_pos += ball_speed
-    
-    # Collision detection and response
-    direction = ball_pos - border_center
-    distance_from_center = direction.length()
-    
-    if distance_from_center > border_radius - ball_radius:
-        # Calculate the normal at the point of contact
-        normal = direction.normalize()
-        
-        # Reflect the ball's speed vector over the normal
-        ball_speed.reflect_ip(normal)
-        
-        # Apply energy loss
-        ball_speed *= energy_loss
-        
-        # Grow the ball
-        ball_radius = int(ball_radius * ball_growth)
-        
-        # Correct the position so the ball is exactly on the border
-        overlap = distance_from_center + ball_radius - border_radius
-        ball_pos -= overlap * normal
-    
-    # Clear the screen
-    screen.fill(BLACK)
-    
-    # Draw the border with anti-aliasing
-    draw_antialiased_circle(screen, WHITE, border_center, border_radius)
-    # Draw the border outline
-    pygame.draw.circle(screen, WHITE, border_center, border_radius, border_thickness)
-    
-    # Draw the ball with anti-aliasing
-    draw_antialiased_circle(screen, RED, ball_pos, ball_radius)
-    
-    # Flip the display
-    pygame.display.flip()
-    
-    # Cap the frame rate
+    bounce_process()
     clock.tick(60)  # The frame rate can be adjusted to your preference
+    
+    if ball_radius > border_radius * 3:
+        running = False
 
 # Quit Pygame
 pygame.quit()
