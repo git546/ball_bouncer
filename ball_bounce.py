@@ -7,7 +7,7 @@ import time
 pygame.init()
 
 # Set up the display
-width, height = 1600, 1200
+width, height = 900, 600
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption('Bouncing Ball Simulation')
 
@@ -18,21 +18,21 @@ WHITE = (255, 255, 255)
 
 # Ball settings
 ball_pos = pygame.math.Vector2(width // 2, height // 3)
-ball_speed = pygame.math.Vector2(2, 2)
-ball_radius = 20
+ball_speed = pygame.math.Vector2(1, 1)
+ball_radius = 10
 ball_growth = 1.1  # The factor by which the ball grows
 energy_loss = 1.01  # The amount of energy lost on each bounce
 
 # Border settings
 border_center = pygame.math.Vector2(width // 2, height // 2)
-border_radius = min(width, height) // 3
-border_thickness = 10  # pixels
+border_radius = min(width, height) // 2
+border_thickness = 1  # pixels
 
 # Clock to control the frame rate
 clock = pygame.time.Clock()
 gravity = pygame.math.Vector2(0, 0.5)  # The gravitational acceleration
 
-player = sound_ctl.StreamingMusicPlayer("./sample.mp3")  # 여러분의 오디오 파일 경로로 변경하세요.
+player = sound_ctl.StreamingMusicPlayer("./sample.mp3")
     
     
 def draw_antialiased_circle(surface, color, center, radius):
@@ -52,7 +52,7 @@ def bounce_process():
     direction = ball_pos - border_center
     distance_from_center = direction.length()
 
-    if distance_from_center > border_radius - ball_radius:
+    if distance_from_center >= border_radius - ball_radius:
         # Calculate the normal at the point of contact
         normal = direction.normalize()
 
@@ -64,14 +64,14 @@ def bounce_process():
 
         # Grow the ball
         ball_radius = int(ball_radius * ball_growth)
-        
-        #play a song shortly
-        player.play()
-        player.pause()
 
         # Correct the position so the ball is exactly on the border
         overlap = distance_from_center + ball_radius - border_radius
         ball_pos -= overlap * normal
+        
+        # 공이 경계에 충돌할 때마다 음악 재생
+        player._play_segment(duration_ms=500)  # 예: 1초간 재생
+        
 
     # Clear the screen
     screen.fill(BLACK)
@@ -87,19 +87,4 @@ def bounce_process():
     # Flip the display
     pygame.display.flip()
 
-# Main loop
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-    
-    bounce_process()
-    clock.tick(60)  # The frame rate can be adjusted to your preference
-    
-    if ball_radius > border_radius * 3:
-        running = False
 
-# Quit Pygame
-pygame.quit()
-sys.exit()

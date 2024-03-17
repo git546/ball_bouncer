@@ -51,16 +51,18 @@ class StreamingMusicPlayer:
             self.current_position = 0
             if self.playback_object:
                 self.playback_object.stop()
+                
+    def play_segment_async(self, duration_ms=1000):
+        threading.Thread(target=self._play_segment, args=(duration_ms,)).start()
 
-if __name__ == "__main__":
-    player = StreamingMusicPlayer("./sample.mp3")  # 여러분의 오디오 파일 경로로 변경하세요.
-    player.play()
-    time.sleep(10)  # 5초 동안 재생
-    player.pause()
-    print("일시 정지...")
-    time.sleep(3)  # 3초 동안 일시 정지
-    print("재개...")
-    player.play()
-    time.sleep(5)  # 다시 5초 동안 재생
-    player.stop()
-    print("정지 및 종료...")
+    def _play_segment(self, duration_ms):
+        with self.lock:
+            if self.current_position + duration_ms > len(self.audio):
+                duration_ms = len(self.audio) - self.current_position
+            segment = self.audio[self.current_position:self.current_position + duration_ms]
+            playback_object = sa.play_buffer(segment.raw_data, num_channels=segment.channels, bytes_per_sample=segment.sample_width, sample_rate=segment.frame_rate)
+            #playback_object.wait_done()
+            self.current_position += duration_ms
+            if self.current_position >= len(self.audio):
+                self.current_position = 0  # 또는 음악을 끝내고 싶다면 self.stop() 호출
+
