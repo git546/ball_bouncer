@@ -1,90 +1,81 @@
 import pygame
 import sys
 from pygame import gfxdraw
-import sound_ctl
-import time
-# Initialize Pygame
-pygame.init()
 
-# Set up the display
-width, height = 900, 600
-screen = pygame.display.set_mode((width, height))
-pygame.display.set_caption('Bouncing Ball Simulation')
+class Ball:
+    def __init__(self, position, speed, radius, color, growth, energy_loss):
+        self.position = pygame.math.Vector2(position)
+        self.speed = pygame.math.Vector2(speed)
+        self.radius = radius
+        self.color = color
+        self.growth = growth
+        self.energy_loss = energy_loss
+        self.gravity = pygame.math.Vector2(0, 0.5)
 
-# Define colors
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-WHITE = (255, 255, 255)
+    def move(self):
+        self.speed += self.gravity
+        self.position += self.speed
 
-# Ball settings
-ball_pos = pygame.math.Vector2(width // 2, height // 3)
-ball_speed = pygame.math.Vector2(1, 1)
-ball_radius = 10
-ball_growth = 1.1  # The factor by which the ball grows
-energy_loss = 1.01  # The amount of energy lost on each bounce
+    def bounce(self, border):
+        direction = self.position - border.center
+        distance = direction.length()
 
-# Border settings
-border_center = pygame.math.Vector2(width // 2, height // 2)
-border_radius = min(width, height) // 2
-border_thickness = 1  # pixels
+        if distance >= border.radius - self.radius:
+            normal = direction.normalize()
+            self.speed.reflect_ip(normal)
+            self.speed *= self.energy_loss
+            self.radius = int(self.radius * self.growth)
 
-# Clock to control the frame rate
-clock = pygame.time.Clock()
-gravity = pygame.math.Vector2(0, 0.5)  # The gravitational acceleration
+            overlap = distance + self.radius - border.radius
+            self.position -= overlap * normal
 
-player = sound_ctl.StreamingMusicPlayer("./sample.mp3")
-    
-    
-def draw_antialiased_circle(surface, color, center, radius):
-    gfxdraw.aacircle(surface, int(center.x), int(center.y), radius, color)
-    gfxdraw.filled_circle(surface, int(center.x), int(center.y), radius, color)
+    def draw(self, screen):
+        gfxdraw.aacircle(screen, int(self.position.x), int(self.position.y), self.radius, self.color)
+        gfxdraw.filled_circle(screen, int(self.position.x), int(self.position.y), self.radius, self.color)
 
-def bounce_process():
-    global ball_pos, ball_speed, ball_radius
-    
-    # Apply gravity to vertical speed
-    ball_speed += gravity
+class Border:
+    def __init__(self, center, radius, thickness, color):
+        self.center = pygame.math.Vector2(center)
+        self.radius = radius
+        self.thickness = thickness
+        self.color = color
 
-    # Move the ball
-    ball_pos += ball_speed
+    def draw(self, screen):
+        pygame.draw.circle(screen, self.color, self.center, self.radius, self.thickness)
 
-    # Collision detection and response
-    direction = ball_pos - border_center
-    distance_from_center = direction.length()
+class Game:
+    def __init__(self):
+        pygame.init()
+        self.width, self.height = 900, 600
+        self.screen = pygame.display.set_mode((self.width, self.height))
+        pygame.display.set_caption('Bouncing Ball Simulation with Classes')
 
-    if distance_from_center >= border_radius - ball_radius:
-        # Calculate the normal at the point of contact
-        normal = direction.normalize()
-
-        # Reflect the ball's speed vector over the normal
-        ball_speed.reflect_ip(normal)
-
-        # Apply energy loss
-        ball_speed *= energy_loss
-
-        # Grow the ball
-        ball_radius = int(ball_radius * ball_growth)
-
-        # Correct the position so the ball is exactly on the border
-        overlap = distance_from_center + ball_radius - border_radius
-        ball_pos -= overlap * normal
+        self.black = (0, 0, 0)
+        self.white = (255, 255, 255)
+        self.red = (255, 0, 0)
         
-        # 공이 경계에 충돌할 때마다 음악 재생
-        player._play_segment(duration_ms=500)  # 예: 1초간 재생
-        
+        self.border = Border((self.width // 2, self.height // 2), min(self.width, self.height) // 2, 1, self.white)
+        self.ball = Ball((self.width // 2, self.height // 3), (3, 3), 10, self.white, 1.1, 1.01)
 
-    # Clear the screen
-    screen.fill(BLACK)
+    def run(self):
+        clock = pygame.time.Clock()
 
-    # Draw the border with anti-aliasing
-    draw_antialiased_circle(screen, WHITE, border_center, border_radius)
-    # Draw the border outline
-    pygame.draw.circle(screen, WHITE, border_center, border_radius, border_thickness)
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
 
-    # Draw the ball with anti-aliasing
-    draw_antialiased_circle(screen, RED, ball_pos, ball_radius)
+            self.ball.move()
+            self.ball.bounce(self.border)
 
-    # Flip the display
-    pygame.display.flip()
+            self.screen.fill(self.black)
+            self.border.draw(self.screen)
+            self.ball.draw(self.screen)
+            pygame.display.flip()
 
+            clock.tick(60)
 
+if __name__ == "__main__":
+    game = Game()
+    game.run()
