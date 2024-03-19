@@ -57,12 +57,6 @@ class Ball:
             self.radius = int(self.radius * self.growth)
             
             
-            if self.color != (0,0,0):
-                self.color = (0,0,0)
-                Game.set_background_color(Game,(255,255,255))
-            else :
-                self.color = (255,255,255)
-                Game.set_background_color(Game,(0,0,0))
             
             overlap = distance + self.radius - border.radius
             self.position -= overlap * normal
