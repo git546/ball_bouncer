@@ -1,6 +1,19 @@
 import pygame
 import sys
 from pygame import gfxdraw
+import random
+
+class GimmickStrategy:
+    def apply(self, ball, border):
+        pass
+
+class ColorSwapGimmick(GimmickStrategy):
+    def apply(self, ball, border):
+        # 공과 경계의 색을 교환합니다.
+        ball_color = ball.color
+        border_color = border.color  # 직접 접근하여 색상을 얻습니다.
+        ball.set_color(border_color)  # Ball 클래스의 set_color 메서드를 이용해 색상을 변경합니다.
+        border.color = ball_color  # Border 객체의 color 속성을 직접 변경합니다.
 
 class Ball:
     def __init__(self, position, speed, radius, color, growth, energy_loss):
@@ -56,10 +69,11 @@ class Ball:
             self.speed *= self.energy_loss
             self.radius = int(self.radius * self.growth)
             
-            
-            
             overlap = distance + self.radius - border.radius
             self.position -= overlap * normal
+            
+            return True
+        return False
 
     def draw(self, screen):
         gfxdraw.aacircle(screen, int(self.position.x), int(self.position.y), self.radius, self.color)
@@ -128,8 +142,13 @@ class Game:
         self.red = (255, 0, 0)
         
         self._background_color = self.black
-        self.border = Border((self.width // 2, self.height // 2), min(self.width, self.height) // 2, 1, self.white)
+        self.border = Border((self.width // 2, self.height // 2), min(self.width, self.height) // 2, 1, self.black)
         self.ball = Ball((self.width // 2, self.height // 3), (3, 3), 10, self.white, 1.1, 1.01)
+        
+        # 사용 가능한 기믹 리스트
+        self.gimmicks = [ColorSwapGimmick()]
+        # 기믹 선택
+        self.selected_gimmick = random.choice(self.gimmicks)
     
     def set_background_color(self, value):
         if all(0 <= channel <= 255 for channel in value):
@@ -147,7 +166,9 @@ class Game:
                     sys.exit()
 
             self.ball.move()
-            self.ball.bounce(self.border)
+            if self.ball.bounce(self.border):
+                # 선택된 기믹 적용
+                self.selected_gimmick.apply(self.ball, self.border)
 
             self.screen.fill(self._background_color)
             self.border.draw(self.screen)
