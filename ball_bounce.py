@@ -9,11 +9,12 @@ class GimmickStrategy:
 
 class ColorSwapGimmick(GimmickStrategy):
     def apply(self, ball, border):
-        # 공과 경계의 색을 교환합니다.
         ball_color = ball.color
-        border_color = border.color  # 직접 접근하여 색상을 얻습니다.
-        ball.set_color(border_color)  # Ball 클래스의 set_color 메서드를 이용해 색상을 변경합니다.
-        border.color = ball_color  # Border 객체의 color 속성을 직접 변경합니다.
+        border_inner_color = border.inner_color
+        ball.set_color(border_inner_color)
+        border.outer_color = border.inner_color
+        border.inner_color = ball_color
+        
 
 class Ball:
     def __init__(self, position, speed, radius, color, growth, energy_loss):
@@ -80,11 +81,13 @@ class Ball:
         gfxdraw.filled_circle(screen, int(self.position.x), int(self.position.y), self.radius, self.color)
 
 class Border:
-    def __init__(self, center, radius, thickness, color):
+    def __init__(self, center, radius, thickness, inner_color, outer_color):
         self.center = pygame.math.Vector2(center)
         self.radius = radius
         self.thickness = thickness
-        self.color = color
+        self.inner_color = inner_color  # 내부 색상 추가
+        self.outer_color = outer_color  # 외부 색상 추가
+        
     @property
     def center(self):
         return self._center
@@ -127,7 +130,10 @@ class Border:
             print("Each channel in the color must be between 0 and 255.")
 
     def draw(self, screen):
-        pygame.draw.circle(screen, self.color, self.center, self.radius, self.thickness)
+        # 외부 원 그리기
+        pygame.draw.circle(screen, self.outer_color, self.center, self.radius + self.thickness)
+        # 내부 원 그리기
+        pygame.draw.circle(screen, self.inner_color, self.center, self.radius)
 
 class Game:
     def __init__(self):
@@ -142,7 +148,11 @@ class Game:
         self.red = (255, 0, 0)
         
         self._background_color = self.black
-        self.border = Border((self.width // 2, self.height // 2), min(self.width, self.height) // 2, 1, self.black)
+        self.border = Border((self.width // 2, self.height // 2), 
+                             min(self.width, self.height) // 2, 
+                             1, 
+                             self.black,  # 내부 색상
+                             self.white)  # 외부 색상
         self.ball = Ball((self.width // 2, self.height // 3), (3, 3), 10, self.white, 1.1, 1.01)
         
         # 사용 가능한 기믹 리스트
@@ -176,6 +186,7 @@ class Game:
             pygame.display.flip()
 
             clock.tick(60)
+            
 
 if __name__ == "__main__":
     game = Game()
