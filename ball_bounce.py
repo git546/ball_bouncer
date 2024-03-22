@@ -8,11 +8,12 @@ class GimmickStrategy:
         pass
 
 class ColorSwapGimmick(GimmickStrategy):
-    def apply(self, ball, border):
+    def apply(self, ball, border, game):
         ball_color = ball.color
         border_inner_color = border.inner_color
         ball.set_color(border_inner_color)
         border.outer_color = border.inner_color
+        game.swap_border_and_background_colors()  # 배경색과 보더색 교환 메서드 호출
         border.inner_color = ball_color
         
 
@@ -165,6 +166,10 @@ class Game:
             self._background_color = value
         else:
             print("Each channel in the background color must be between 0 and 255.")
+            
+    def swap_border_and_background_colors(self):
+        # 배경색과 보더색 교환
+        self.border.outer_color, self._background_color = self._background_color, self.border.outer_color
     
     def run(self):
         clock = pygame.time.Clock()
@@ -178,7 +183,7 @@ class Game:
             self.ball.move()
             if self.ball.bounce(self.border):
                 # 선택된 기믹 적용
-                self.selected_gimmick.apply(self.ball, self.border)
+                self.selected_gimmick.apply(self.ball, self.border, self)
 
             self.screen.fill(self._background_color)
             self.border.draw(self.screen)
