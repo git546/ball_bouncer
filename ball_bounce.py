@@ -148,12 +148,14 @@ class Game:
         self.white = (255, 255, 255)
         self.red = (255, 0, 0)
         
-        self._background_color = self.black
+        self._background_color = self.white
+        
         self.border = Border((self.width // 2, self.height // 2), 
                              min(self.width, self.height) // 2, 
                              1, 
                              self.black,  # 내부 색상
                              self.white)  # 외부 색상
+        
         self.ball = Ball((self.width // 2, self.height // 3), (3, 3), 10, self.white, 1.1, 1.01)
         
         # 사용 가능한 기믹 리스트
@@ -182,7 +184,6 @@ class Game:
 
             self.ball.move()
             if self.ball.bounce(self.border):
-                # 선택된 기믹 적용
                 self.selected_gimmick.apply(self.ball, self.border, self)
 
             self.screen.fill(self._background_color)
@@ -192,7 +193,8 @@ class Game:
 
             clock.tick(60)
             
-
+"""
 if __name__ == "__main__":
     game = Game()
     game.run()
+"""

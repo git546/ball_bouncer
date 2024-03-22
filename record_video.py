@@ -72,7 +72,8 @@ video = cv2.VideoWriter('video.mp4', fourcc, fps, (width, height))
 
 running = True
 while running:
-    ball_bounce.bounce_process()  # bounce_process 함수가 screen 객체를 필요로 한다고 가정
+    game = ball_bounce.Game()
+    game.run()
     pygame.display.flip()
     frame = pygame.surfarray.array3d(pygame.display.get_surface())
     frame = cv2.transpose(frame)
