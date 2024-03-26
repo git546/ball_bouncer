@@ -1,21 +1,20 @@
 import pygame
 import sys
-from pygame import gfxdraw
 import random
+from pygame import gfxdraw
 
 class GimmickStrategy:
-    def apply(self, ball, border):
+    def apply(self, ball, border, game):
         pass
 
 class ColorSwapGimmick(GimmickStrategy):
-    def apply(self, ball, border, game):
-        ball_color = ball.color
-        border_inner_color = border.inner_color
-        ball.set_color(border_inner_color)
-        border.outer_color = border.inner_color
-        game.swap_border_and_background_colors()  # 배경색과 보더색 교환 메서드 호출
-        border.inner_color = ball_color
-        
+   def apply(self, ball, border, game):
+       ball_color = ball.color
+       border_inner_color = border.inner_color
+       ball.set_color(border_inner_color)
+       border.outer_color = border.inner_color
+       game.swap_border_and_background_colors()  # 배경색과 보더색 교환 메서드 호출
+       border.inner_color = ball_color
 
 class Ball:
     def __init__(self, position, speed, radius, color, growth, energy_loss):
@@ -26,10 +25,11 @@ class Ball:
         self.growth = growth
         self.energy_loss = energy_loss
         self.gravity = pygame.math.Vector2(0, 0.5)
+        
     # Speed setter
     def set_speed(self, value):
         self.speed = pygame.math.Vector2(value)
-
+        
     # Radius setter
     def set_radius(self, value):
         if value > 0:
@@ -133,66 +133,58 @@ class Border:
     def draw(self, screen):
         # 외부 원 그리기
         pygame.draw.circle(screen, self.outer_color, self.center, self.radius + self.thickness)
+        
         # 내부 원 그리기
         pygame.draw.circle(screen, self.inner_color, self.center, self.radius)
 
 class Game:
     def __init__(self):
         pygame.init()
-        
         self.width, self.height = 900, 600
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption('Bouncing Ball Simulation with Classes')
         
-        self.black = (0, 0, 0)
-        self.white = (255, 255, 255)
-        self.red = (255, 0, 0)
-        
-        self._background_color = self.white
-        
-        self.border = Border((self.width // 2, self.height // 2), 
-                             min(self.width, self.height) // 2, 
-                             1, 
-                             self.black,  # 내부 색상
-                             self.white)  # 외부 색상
-        
-        self.ball = Ball((self.width // 2, self.height // 3), (3, 3), 10, self.white, 1.1, 1.01)
-        
-        # 사용 가능한 기믹 리스트
-        self.gimmicks = [ColorSwapGimmick()]
-        # 기믹 선택
-        self.selected_gimmick = random.choice(self.gimmicks)
-    
-    def set_background_color(self, value):
-        if all(0 <= channel <= 255 for channel in value):
-            self._background_color = value
+        # 랜덤으로 컬러 또는 흑백 선택
+        self.color_mode = random.choice(['color', 'monochrome'])
+        if self.color_mode == 'color':
+            # 컬러 디자인 세트 중 하나를 랜덤으로 선택
+            pass
         else:
-            print("Each channel in the background color must be between 0 and 255.")
-            
-    def swap_border_and_background_colors(self):
-        # 배경색과 보더색 교환
-        self.border.outer_color, self._background_color = self._background_color, self.border.outer_color
-    
+            # 흑백 디자인 세트 선택
+            pass
+        
+        # on/off 기믹 활성화 여부 선택
+        self.gimmicks = [ColorSwapGimmick()] # 예시로 ColorSwapGimmick만 추가
+        self.selected_gimmick = random.choice(self.gimmicks) # 랜덤으로 기믹 선택
+        
+        # 바운스 기믹 선택 (여기서는 예시로 하나만 선택)
+        self.bounce_gimmick = self.selected_gimmick
+        
+        # 추가적인 초기화 필요한 경우 여기에 작성
+        
     def run(self):
+        running = True
         clock = pygame.time.Clock()
-
-        while True:
+        
+        while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-
-            self.ball.move()
-            if self.ball.bounce(self.border):
-                self.selected_gimmick.apply(self.ball, self.border, self)
-
-            self.screen.fill(self._background_color)
-            self.border.draw(self.screen)
-            self.ball.draw(self.screen)
+                    running = False
+            
+            # 공 이동, 경계 반사 로직 등
+            
+            # 기믹 적용
+            if self.selected_gimmick:
+                self.selected_gimmick.apply(None, None, self) # 예시, 실제로는 인자로 적절한 객체 전달
+            
+            # 화면 그리기
+            self.screen.fill((255, 255, 255)) # 예시로 하얀 배경 설정, 실제로는 선택된 디자인 적용
+            # 여기에 공 그리기, 경계 그리기 등의 로직 추가
+            
             pygame.display.flip()
-
             clock.tick(60)
-
+        
+        pygame.quit()
 
 if __name__ == "__main__":
     game = Game()
