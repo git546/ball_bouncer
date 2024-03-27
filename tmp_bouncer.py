@@ -2,7 +2,7 @@ import pygame
 import sys
 import random
 from pygame import gfxdraw
-from design_sets import color_design_sets, monochrome_design_sets
+from game_configurations import configurations
 
 class GimmickStrategy:
     def apply(self, ball, border, game):
@@ -18,7 +18,7 @@ class ColorSwapGimmick(GimmickStrategy):
        border.inner_color = ball_color
 
 class Ball:
-    def __init__(self, position, speed, radius, color, growth, energy_loss):
+    def __init__(self, position, speed, radius, color, growth, energy_loss, gravity):
         self.position = pygame.math.Vector2(position)
         self.speed = pygame.math.Vector2(speed)
         self.radius = radius
@@ -145,23 +145,45 @@ class Game:
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption('Bouncing Ball Simulation with Classes')
         
-        # 랜덤으로 컬러 또는 흑백 선택
-        self.color_mode = random.choice(['color', 'monochrome'])
-        if self.color_mode == 'color':
-            self.current_design = random.choice(color_design_sets)
-            pass
+        self._background_color = self.white
+        
+        # 랜덤으로 유형 선택
+        selected_type_key = random.choice(list(configurations.keys()))
+        selected_type = configurations[selected_type_key]
+
+        # Border 객체 초기화
+        border_config = selected_type['border']
+        self.border = Border(
+            center=border_config['center'],
+            radius=border_config['radius'],
+            thickness=border_config['thickness'],
+            inner_color=border_config['inner_color'],
+            outer_color=border_config['outer_color']
+        )
+        
+        # Ball 객체 초기화
+        ball_config = selected_type['ball']
+        self.ball = Ball(
+            position=ball_config['position'],
+            speed=ball_config['speed'],
+            radius=ball_config['radius'],
+            color=ball_config['color']() if callable(ball_config['color']) else ball_config['color'],
+            growth=ball_config['growth'],
+            energy_loss=ball_config['energy_loss']
+        )
+
+        # 기믹 객체 생성 (예시)
+        self.selected_gimmick = selected_type.get('gimmick')
+    
+    def set_background_color(self, value):
+        if all(0 <= channel <= 255 for channel in value):
+            self._background_color = value
         else:
-            self.current_design = random.choice(monochrome_design_sets)
-            pass
-        
-        # on/off 기믹 활성화 여부 선택
-        self.gimmicks = [ColorSwapGimmick()] # 예시로 ColorSwapGimmick만 추가
-        self.selected_gimmick = random.choice(self.gimmicks) # 랜덤으로 기믹 선택
-        
-        # 바운스 기믹 선택 (여기서는 예시로 하나만 선택)
-        self.bounce_gimmick = self.selected_gimmick
-        
-        # 추가적인 초기화 필요한 경우 여기에 작성
+            print("Each channel in the background color must be between 0 and 255.")
+            
+    def swap_border_and_background_colors(self):
+        # 배경색과 보더색 교환
+        self.border.outer_color, self._background_color = self._background_color, self.border.outer_color
         
     def run(self):
         running = True
@@ -170,20 +192,20 @@ class Game:
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    running = False
+                    pygame.quit()
+                    sys.exit()
             
-            # 공 이동, 경계 반사 로직 등
+            self.ball.move()
             
-            # 기믹 적용
-            if self.selected_gimmick:
-                self.selected_gimmick.apply(None, None, self) # 예시, 실제로는 인자로 적절한 객체 전달
-            
-            # 화면 그리기
-            self.screen.fill((255, 255, 255)) # 예시로 하얀 배경 설정, 실제로는 선택된 디자인 적용
-            # 여기에 공 그리기, 경계 그리기 등의 로직 추가
-            
-            pygame.display.flip()
-            clock.tick(60)
+            if self.ball.bounce(self.border):
+                self.selected_gimmick.apply(self.ball, self.border, self)
+                
+           self.screen.fill(self._background_color)
+           self.border.draw(self.screen)
+           self.ball.draw(self.screen)
+           pygame.display.flip()
+
+           clock.tick(60)
         
         pygame.quit()
 

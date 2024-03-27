@@ -21,9 +21,6 @@ configurations = {
             'gravity': (0, 0.5),
         },
         'gimmick': 'ColorSwapGimmick',
-    },
-    'type2': {
-        # 다른 유형에 대한 설정...gra
-    },
+    }
     # 추가 유형 설정...
 }
