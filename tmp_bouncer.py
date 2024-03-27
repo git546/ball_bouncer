@@ -2,6 +2,7 @@ import pygame
 import sys
 import random
 from pygame import gfxdraw
+from design_sets import color_design_sets, monochrome_design_sets
 
 class GimmickStrategy:
     def apply(self, ball, border, game):
@@ -147,10 +148,10 @@ class Game:
         # 랜덤으로 컬러 또는 흑백 선택
         self.color_mode = random.choice(['color', 'monochrome'])
         if self.color_mode == 'color':
-            # 컬러 디자인 세트 중 하나를 랜덤으로 선택
+            self.current_design = random.choice(color_design_sets)
             pass
         else:
-            # 흑백 디자인 세트 선택
+            self.current_design = random.choice(monochrome_design_sets)
             pass
         
         # on/off 기믹 활성화 여부 선택
