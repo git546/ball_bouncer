@@ -2,6 +2,7 @@ import pygame
 import sys
 from pygame import gfxdraw
 import random
+from game_configurations import configurations
 
 class GimmickStrategy:
     def apply(self, ball, border):
@@ -18,7 +19,7 @@ class ColorSwapGimmick(GimmickStrategy):
         
 
 class Ball:
-    def __init__(self, position, speed, radius, color, growth, energy_loss):
+    def __init__(self, position, speed, radius, color, growth, energy_loss, gravity):
         self.position = pygame.math.Vector2(position)
         self.speed = pygame.math.Vector2(speed)
         self.radius = radius
@@ -148,15 +149,33 @@ class Game:
         self.white = (255, 255, 255)
         self.red = (255, 0, 0)
         
-        self._background_color = self.white
+        self._background_color = self.black
         
-        self.border = Border((self.width // 2, self.height // 2), 
-                             min(self.width, self.height) // 2, 
-                             1, 
-                             self.black,  # 내부 색상
-                             self.white)  # 외부 색상
-        
-        self.ball = Ball((self.width // 2, self.height // 3), (3, 3), 10, self.white, 1.1, 1.01)
+        # 랜덤으로 유형 선택
+        selected_type_key = random.choice(list(configurations.keys()))
+        selected_type = configurations[selected_type_key]
+
+        # Border 객체 초기화
+        border_config = selected_type['border']
+        self.border = Border(
+           center=border_config['center'],
+           radius=border_config['radius'],
+           thickness=border_config['thickness'],
+           inner_color=border_config['inner_color'],
+           outer_color=border_config['outer_color']
+        )
+       
+        # Ball 객체 초기화
+        ball_config = selected_type['ball']
+        self.ball = Ball(
+           position=ball_config['position'],
+           speed=ball_config['speed'],
+           radius=ball_config['radius'],
+           color=ball_config['color']() if callable(ball_config['color']) else ball_config['color'],
+           growth=ball_config['growth'],
+           energy_loss=ball_config['energy_loss'],
+           gravity=ball_config['gravity']
+        )
         
         # 사용 가능한 기믹 리스트
         self.gimmicks = [ColorSwapGimmick()]

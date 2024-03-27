@@ -188,25 +188,34 @@ class Game:
     def run(self):
         running = True
         clock = pygame.time.Clock()
-        
+
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-            
-            self.ball.move()
-            
-            if self.ball.bounce(self.border):
-                self.selected_gimmick.apply(self.ball, self.border, self)
-                
-           self.screen.fill(self._background_color)
-           self.border.draw(self.screen)
-           self.ball.draw(self.screen)
-           pygame.display.flip()
+                    running = False
 
-           clock.tick(60)
-        
+            # 공의 움직임을 업데이트합니다.
+            self.ball.move()
+
+            # 공이 경계에 닿았는지 확인하고, 닿았다면 bounce 메서드를 호출합니다.
+            if self.ball.bounce(self.border):
+                # 선택된 기믹이 있다면 적용합니다.
+                if self.gimmick:
+                    self.gimmick.apply(self.ball, self.border, self)
+
+            # 화면을 배경색으로 채웁니다.
+            self.screen.fill(self._background_color)
+
+            # 경계와 공을 그립니다.
+            self.border.draw(self.screen)
+            self.ball.draw(self.screen)
+
+            # 화면에 그린 내용을 업데이트합니다.
+            pygame.display.flip()
+
+            # FPS를 설정합니다.
+            clock.tick(60)
+
         pygame.quit()
 
 if __name__ == "__main__":
