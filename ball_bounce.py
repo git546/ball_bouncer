@@ -26,7 +26,7 @@ class Ball:
         self.color = color
         self.growth = growth
         self.energy_loss = energy_loss
-        self.gravity = pygame.math.Vector2(0, 0.5)
+        self.gravity = gravity
     # Speed setter
     def set_speed(self, value):
         self.speed = pygame.math.Vector2(value)
@@ -177,17 +177,38 @@ class Game:
            gravity=ball_config['gravity']
         )
         
+        #기믹들 여부 호출
+        
         # 사용 가능한 기믹 리스트
         self.gimmicks = [ColorSwapGimmick()]
         # 기믹 선택
         self.selected_gimmick = random.choice(self.gimmicks)
     
     def set_background_color(self, value):
-        if all(0 <= channel <= 255 for channel in value):
-            self._background_color = value
-        else:
-            print("Each channel in the background color must be between 0 and 255.")
-            
+            if all(0 <= channel <= 255 for channel in value):
+                self._background_color = value
+            else:
+                print("Each channel in the background color must be between 0 and 255.")
+                
+    def initialize_gimmicks(self, gimmick_config):
+        # 충돌 시와 이동 시 적용되는 기믹 객체 리스트 초기화
+        self.gimmicks_on_collision = []
+        self.gimmicks_on_move = []
+
+        # 충돌 시 적용되는 기믹 초기화
+        for gimmick_name, is_on in gimmick_config.get('on_collision', {}).items():
+            if is_on:
+                gimmick_class = globals().get(gimmick_name)
+                if gimmick_class:
+                    self.gimmicks_on_collision.append(gimmick_class())
+
+        # 이동 시 적용되는 기믹 초기화
+        for gimmick_name, is_on in gimmick_config.get('on_move', {}).items():
+            if is_on:
+                gimmick_class = globals().get(gimmick_name)
+                if gimmick_class:
+                    self.gimmicks_on_move.append(gimmick_class())
+                            
     def swap_border_and_background_colors(self):
         # 배경색과 보더색 교환
         self.border.outer_color, self._background_color = self._background_color, self.border.outer_color
