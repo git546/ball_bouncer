@@ -45,7 +45,7 @@ class ColorFadeGimmick:
         
         # 보간된 색상 적용
         interpolated_color = lerp_color(start_color, end_color, self.t)
-        ball.set_color(interpolated_color)
+        ball.set_border_color(interpolated_color)
         
         # 보간 비율 업데이트
         self.t += 0.005  # 보간 속도 조절
@@ -67,6 +67,7 @@ class Ball:
         self.energy_loss = energy_loss
         self.gravity = gravity
         self.show_border = False  # 테두리 표시 여부를 저장하는 변수
+        self.border_color = colors['red']
 
     # Speed setter
     def set_speed(self, value):
@@ -82,6 +83,12 @@ class Ball:
     def set_color(self, value):
         if all(0 <= channel <= 255 for channel in value):
             self.color = value
+        else:
+            print("Each channel in the color must be between 0 and 255.")
+            
+    def set_border_color(self, value):
+        if all(0 <= channel <= 255 for channel in value):
+            self.border_color = value
         else:
             print("Each channel in the color must be between 0 and 255.")
             
@@ -121,8 +128,7 @@ class Ball:
 
     def draw(self, screen):
         if self.show_border:
-           # 테두리를 그리는 로직 추가
-           pygame.draw.circle(screen, (0, 0, 0), (int(self.position.x), int(self.position.y)), self.radius*1.5)
+           pygame.draw.circle(screen, self.border_color, (int(self.position.x), int(self.position.y)), self.radius*1.5)            # 테두리를 그리는 로직 추가
         gfxdraw.aacircle(screen, int(self.position.x), int(self.position.y), self.radius, self.color)
         gfxdraw.filled_circle(screen, int(self.position.x), int(self.position.y), self.radius, self.color)
 
@@ -227,10 +233,6 @@ class Game:
         
         for gimmick in self.gimmicks_on_collision:
             gimmick.apply(self.ball, self.border, self)
-        # 사용 가능한 기믹 리스트
-        #self.gimmicks = [ColorSwapGimmick()]
-        # 기믹 선택
-        #self.selected_gimmick = random.choice(self.gimmicks)
     
     def set_background_color(self, value):
             if all(0 <= channel <= 255 for channel in value):
@@ -277,7 +279,12 @@ class Game:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-            
+                    
+            for gimmick in self.gimmicks_on_init:
+                gimmick.apply(self.ball, self.border, self)
+                # 이후 이 리스트를 비워서 다시 적용되지 않도록 함
+            self.gimmicks_on_init = []
+
             self.ball.move()
             if self.ball.bounce(self.border):
                 #self.selected_gimmick.apply(self.ball, self.border, self)
