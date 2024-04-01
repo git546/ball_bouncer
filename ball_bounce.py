@@ -56,6 +56,16 @@ class ColorFadeGimmick:
 class BorderToggleGimmick(GimmickStrategy):#테두리 만드는 기믹
     def apply(self, ball, border, game):
         ball.show_border = not ball.show_border  # 테두리 표시 여부를 토글
+        
+class Tracer_Gimmick(GimmickStrategy):#트레이서를 만드는 기믹
+    def apply(self, ball, border, game):
+        border.is_inner = False  # 더 이상 공 내부를 갱신하지 않도록 토글
+
+
+
+
+
+
 
 class Ball:
     def __init__(self, position, speed, radius, color, growth, energy_loss, gravity):
@@ -79,6 +89,10 @@ class Ball:
             self.radius = value
         else:
             print("Radius must be positive.")
+            
+    def get_radius(self):
+        return self.radius
+    
      # Color setter
     def set_color(self, value):
         if all(0 <= channel <= 255 for channel in value):
@@ -128,9 +142,13 @@ class Ball:
 
     def draw(self, screen):
         if self.show_border:
-           pygame.draw.circle(screen, self.border_color, (int(self.position.x), int(self.position.y)), self.radius*1.5)            # 테두리를 그리는 로직 추가
+           pygame.draw.circle(screen, self.border_color, (int(self.position.x), int(self.position.y)), self.radius+2)            # 테두리를 그리는 로직 추가
         gfxdraw.aacircle(screen, int(self.position.x), int(self.position.y), self.radius, self.color)
         gfxdraw.filled_circle(screen, int(self.position.x), int(self.position.y), self.radius, self.color)
+
+
+
+
 
 class Border:
     def __init__(self, center, radius, thickness, inner_color, outer_color):
@@ -139,7 +157,7 @@ class Border:
         self.thickness = thickness
         self.inner_color = inner_color  # 내부 색상 추가
         self.outer_color = outer_color  # 외부 색상 추가
-        
+        self.is_inner = True
     @property
     def center(self):
         return self._center
@@ -182,10 +200,16 @@ class Border:
             print("Each channel in the color must be between 0 and 255.")
 
     def draw(self, screen):
-        # 외부 원 그리기
-        pygame.draw.circle(screen, self.outer_color, self.center, self.radius + self.thickness)
-        # 내부 원 그리기
-        pygame.draw.circle(screen, self.inner_color, self.center, self.radius)
+        if self.is_inner:
+            # 외부 원 그리기
+            pygame.draw.circle(screen, self.outer_color, self.center, self.radius + self.thickness)
+            # 내부 원 그리기
+            pygame.draw.circle(screen, self.inner_color, self.center, self.radius)
+
+
+
+
+
 
 class Game:
     def __init__(self):
@@ -229,7 +253,7 @@ class Game:
         
         self.initialize_gimmicks(selected_type.get('gimmick', {}))
         
-        print(self.gimmicks_on_collision)
+        print(self.gimmicks_on_init)
         
         for gimmick in self.gimmicks_on_collision:
             gimmick.apply(self.ball, self.border, self)
@@ -279,12 +303,6 @@ class Game:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-                    
-            for gimmick in self.gimmicks_on_init:
-                gimmick.apply(self.ball, self.border, self)
-                # 이후 이 리스트를 비워서 다시 적용되지 않도록 함
-            self.gimmicks_on_init = []
-
             self.ball.move()
             if self.ball.bounce(self.border):
                 #self.selected_gimmick.apply(self.ball, self.border, self)
@@ -294,15 +312,25 @@ class Game:
 
             for gimmick in self.gimmicks_on_move:
                 gimmick.apply(self.ball, self.border, self)
-                
-            self.screen.fill(self._background_color)
+            
+            if self.border.is_inner:
+                self.screen.fill(self._background_color)
             self.border.draw(self.screen)
             self.ball.draw(self.screen)
             pygame.display.flip()
-
+            
+            for gimmick in self.gimmicks_on_init:
+                gimmick.apply(self.ball, self.border, self)
+                # 이후 이 리스트를 비워서 다시 적용되지 않도록 함
+            self.gimmicks_on_init = []
+            
+            if self.ball.get_radius()>1000:
+                return
             clock.tick(60)
 
 
 if __name__ == "__main__":
-    game = Game()
-    game.run()
+    
+    while 1:
+        game = Game()
+        game.run()
