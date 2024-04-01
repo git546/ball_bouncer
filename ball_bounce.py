@@ -142,7 +142,7 @@ class Ball:
 
     def draw(self, screen):
         if self.show_border:
-           pygame.draw.circle(screen, self.border_color, (int(self.position.x), int(self.position.y)), self.radius+2)            # 테두리를 그리는 로직 추가
+           pygame.draw.circle(screen, self.border_color, (int(self.position.x), int(self.position.y)), self.radius+3)            # 테두리를 그리는 로직 추가
         gfxdraw.aacircle(screen, int(self.position.x), int(self.position.y), self.radius, self.color)
         gfxdraw.filled_circle(screen, int(self.position.x), int(self.position.y), self.radius, self.color)
 
@@ -215,7 +215,7 @@ class Game:
     def __init__(self):
         pygame.init()
         
-        self.width, self.height = 900, 600
+        self.width, self.height = 1080, 1920
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption('Bouncing Ball Simulation with Classes')
         
