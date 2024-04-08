@@ -118,9 +118,9 @@ configurations = {
         'border': {
             'center': (540, 960),  # 고정된 중심 위치
             'radius': 350,  # 고정된 반지름
-            'thickness': 1,  # 고정된 두께
+            'thickness': 10,  # 고정된 두께
             'inner_color': colors['black'],  # 내부 색상
-            'outer_color': colors['white'],  # 외부 색상
+            'outer_color': colors['green'],  # 외부 색상
         },
         
         'ball': {
@@ -145,7 +145,7 @@ configurations = {
             },
             'on_move': {
                 'GravityGimmick': 0,
-                'ColorFadeGimmick' : 0,
+                'ColorFadeGimmick' : 1,
                 'ConnectGimmick' : 1,
             }
         }

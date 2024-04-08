@@ -45,7 +45,8 @@ class ColorFadeGimmick:
         
         # 보간된 색상 적용
         interpolated_color = lerp_color(start_color, end_color, self.t)
-        ball.set_border_color(interpolated_color)
+        ball.color = interpolated_color
+        border.outer_color = interpolated_color
         
         # 보간 비율 업데이트
         self.t += 0.005  # 보간 속도 조절
@@ -327,6 +328,7 @@ class Game:
                     
             if self.border.is_inner:
                 self.screen.fill(self._background_color)
+                
             self.border.draw(self.screen)
             self.ball.draw(self.screen)
                 
