@@ -62,6 +62,22 @@ class Tracer_Gimmick(GimmickStrategy):#트레이서를 만드는 기믹
         border.is_inner = False  # 더 이상 공 내부를 갱신하지 않도록 토글
 
 
+class ConnectGimmick(GimmickStrategy):
+    def __init__(self):
+        self.collision_point_list = []
+
+    def apply(self, ball, border, game):
+        for point in self.collision_point_list:
+            pygame.draw.line(game.screen, ball.color, (int(point.x), int(point.y)), ball.position, 2)
+
+    def add(self, ball, border, game):
+        direction = ball.position - border.center
+        distance = direction.length()
+        normal = direction.normalize()
+        overlap = distance - border.radius
+        collision_point = ball.position - overlap * normal  # 충돌 지점 계산
+        if collision_point:
+            self.collision_point_list.append(collision_point)
 
 
 
@@ -137,7 +153,10 @@ class Ball:
             overlap = distance + self.radius - border.radius
             self.position -= overlap * normal
             
+            collision_point = self.position - overlap * normal  # 충돌 지점 계산
+            print("bounce\n")
             return True
+
         return False
 
     def draw(self, screen):
@@ -227,8 +246,10 @@ class Game:
         
         # 랜덤으로 유형 선택
         selected_type_key = random.choice(list(configurations.keys()))
+        selected_type_key = 'line-bouncing' #임의로 설정하는 테스트용 명령
         selected_type = configurations[selected_type_key]
-
+        
+        
         # Border 객체 초기화
         border_config = selected_type['border']
         self.border = Border(
@@ -253,7 +274,7 @@ class Game:
         
         self.initialize_gimmicks(selected_type.get('gimmick', {}))
         
-        print(self.gimmicks_on_init)
+        print(self.gimmicks_on_move)
         
         for gimmick in self.gimmicks_on_collision:
             gimmick.apply(self.ball, self.border, self)
@@ -303,29 +324,35 @@ class Game:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+                    
+            if self.border.is_inner:
+                self.screen.fill(self._background_color)
+            self.border.draw(self.screen)
+            self.ball.draw(self.screen)
+                
             self.ball.move()
+            
             if self.ball.bounce(self.border):
-                #self.selected_gimmick.apply(self.ball, self.border, self)
+                for gimmick in self.gimmicks_on_move:
+                    if isinstance(gimmick, ConnectGimmick):  # ConnectGimmick에만 해당s
+                        gimmick.add(self.ball, self.border, self)
                 for gimmick in self.gimmicks_on_collision:
                     gimmick.apply(self.ball, self.border, self)
+                
 
 
             for gimmick in self.gimmicks_on_move:
                 gimmick.apply(self.ball, self.border, self)
             
-            if self.border.is_inner:
-                self.screen.fill(self._background_color)
-            self.border.draw(self.screen)
-            self.ball.draw(self.screen)
             pygame.display.flip()
             
             for gimmick in self.gimmicks_on_init:
                 gimmick.apply(self.ball, self.border, self)
-                # 이후 이 리스트를 비워서 다시 적용되지 않도록 함
-            self.gimmicks_on_init = []
+            self.gimmicks_on_init = [] # 이후 이 리스트를 비워서 다시 적용되지 않도록 함
             
             if self.ball.get_radius()>1000:
                 return
+            
             clock.tick(60)
 
 
