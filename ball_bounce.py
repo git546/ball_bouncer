@@ -31,7 +31,7 @@ def lerp_color(start_color, end_color, t):
     b = start_color[2] + (end_color[2] - start_color[2]) * t
     return int(r), int(g), int(b)
 
-class ColorFadeGimmick:
+class ColorFadeGimmick(GimmickStrategy):
     def __init__(self):
         self.rainbow_colors = [colors['red'], colors['orange'], colors['yellow'],
                                colors['green'], colors['blue'], colors['indigo'], colors['violet']]
@@ -79,7 +79,6 @@ class ConnectGimmick(GimmickStrategy):
         collision_point = ball.position - overlap * normal  # 충돌 지점 계산
         if collision_point:
             self.collision_point_list.append(collision_point)
-
 
 
 
@@ -153,9 +152,7 @@ class Ball:
             
             overlap = distance + self.radius - border.radius
             self.position -= overlap * normal
-            
-            collision_point = self.position - overlap * normal  # 충돌 지점 계산
-            print("bounce\n")
+            #print("bounce\n")
             return True
 
         return False

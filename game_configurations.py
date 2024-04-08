@@ -124,7 +124,7 @@ configurations = {
         },
         
         'ball': {
-            'position': (550, 960),  # 초기 위치
+            'position': (550, random.choice([700, 960])), # 초기 위치
             'speed': (2, 2),  # 초기 속도
             'radius': 10,  # 공의 반지름
             'color': colors['green'],  # 랜덤 색상
