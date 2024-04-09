@@ -4,6 +4,7 @@ from pygame import gfxdraw
 import random
 from game_configurations import configurations
 from game_configurations import colors
+import pygame.mixer
 
 class GimmickStrategy:
     def apply(self, ball, border, game):
@@ -80,7 +81,13 @@ class ConnectGimmick(GimmickStrategy):
         if collision_point:
             self.collision_point_list.append(collision_point)
 
+class SoundGimmick(GimmickStrategy):
+    def __init__(self, sound_file):
+        self.sound_file = sound_file
 
+    def apply(self, ball, border, game):
+        sound_effect = pygame.mixer.Sound(self.sound_file)
+        sound_effect.play()
 
 
 class Ball:
@@ -231,7 +238,7 @@ class Border:
 class Game:
     def __init__(self):
         pygame.init()
-        
+        pygame.mixer.init()  # 사운드 초기화
         self.width, self.height = 1080, 1920
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption('Bouncing Ball Simulation with Classes')
@@ -274,8 +281,15 @@ class Game:
         
         print(self.gimmicks_on_move)
         
-        for gimmick in self.gimmicks_on_collision:
-            gimmick.apply(self.ball, self.border, self)
+     
+        # 다른 초기화 코드...
+        
+        # SoundGimmick 초기화
+        sound_file = "springy-bounce-86214.mp3"  # 소리 파일 경로
+        self.sound_gimmick = SoundGimmick(sound_file)
+        
+        # 기존의 gimmicks_on_collision 리스트에 추가
+        self.gimmicks_on_collision.append(self.sound_gimmick)
     
     def set_background_color(self, value):
             if all(0 <= channel <= 255 for channel in value):
