@@ -3,7 +3,7 @@ import random
 
 Game_width = 1080
 Game_height = 1920
-BG_color = random.choice(colors['black'], colors['white'])
+BG_color = colors['black']
 
 
 
@@ -141,7 +141,7 @@ configurations = {
             'speed': (7, 2),  # 초기 속도
             'radius': 10,  # 공의 반지름
             'color': colors['green'],  # 랜덤 색상
-            'growth': 1.1,  # 성장률
+            'growth': 1.05,  # 성장률
             'energy_loss': 1.01,  # 에너지 손실율
             'gravity': (0, random.choice([0, random.uniform(0, 1)])),
         },

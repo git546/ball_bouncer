@@ -3,11 +3,19 @@ import pygame.mixer
 from pygame import gfxdraw
 import sys
 import random
+import threading
+from pydub import AudioSegment
+import simpleaudio as sa
+import time
+import os
 
-import sound_ctl
 from game_configurations import configurations
 from game_configurations import colors
 
+AudioSegment.converter = r'C:\ffmpeg-2024-03-07-git-97beb63a66-full_build\bin\ffmpeg.exe'
+AudioSegment.ffprobe = r'C:\ffmpeg-2024-03-07-git-97beb63a66-full_build\bin\ffprobe.exe'
+ffmpeg_path = r'C:\ffmpeg-2024-03-07-git-97beb63a66-full_build\bin'  # 여기서 경로는 실제 ffmpeg 설치 경로로 변경해야 합니다.
+os.environ['PATH'] += os.pathsep + ffmpeg_path
 
 class GimmickStrategy:
     def apply(self, ball, border, game):
@@ -87,31 +95,72 @@ class ConnectGimmick(GimmickStrategy):
 class SoundGimmick(GimmickStrategy):
     def __init__(self, sound_file):
         self.sound_file = sound_file
-        pygame.mixer.init()
-        pygame.mixer.music.load(self.sound_file)
-        self.paused = False
-        self.position = 0.0  # 재생을 중지한 위치를 저장
+        self.audio = AudioSegment.from_file(self.sound_file)
+        self.playback_object = None
+        self.current_position = 0  # 현재 재생 위치 (밀리초 단위)
+        self.is_playing = False
+        self.is_paused = False
+        self.lock = threading.Lock()
 
-    def apply(self, ball, border, game):
-        if not self.paused:
-            # 처음 재생할 때 혹은 중지 후 재생을 재개할 때
-            pygame.mixer.music.play(start=self.position)
-            self.paused = False
-        else:
-            # 음악이 일시 중지된 경우, 해당 위치에서 재생을 재개
-            pygame.mixer.music.unpause()
+    def play(self):
+        with self.lock:
+            if not self.is_playing or self.is_paused:
+                self.is_playing = True
+                self.is_paused = False
+                threading.Thread(target=self._playback_thread).start()
+
+    def _playback_thread(self):
+        while self.current_position < len(self.audio) and self.is_playing:
+            if not self.is_paused:
+                segment = self.audio[self.current_position:]
+                self.playback_object = sa.play_buffer(segment.raw_data, num_channels=segment.channels,
+                                                      bytes_per_sample=segment.sample_width, sample_rate=segment.frame_rate)
+                start_time = time.time()
+                self.playback_object.wait_done()
+                elapsed_time = (time.time() - start_time) * 1000
+                self.current_position += int(elapsed_time)
+            else:
+                time.sleep(0.1)
 
     def pause(self):
-        # 음악을 일시 중지하고, 현재 재생 위치를 저장
-        self.position = pygame.mixer.music.get_pos() / 1000.0  # milliseconds to seconds
-        pygame.mixer.music.pause()
-        self.paused = True
+        with self.lock:
+            if self.is_playing and not self.is_paused:
+                self.is_paused = True
+                if self.playback_object:
+                    self.playback_object.stop()
 
     def stop(self):
-        # 음악 재생을 완전히 중지하고 위치를 리셋
-        pygame.mixer.music.stop()
-        self.position = 0.0
-        self.paused = False
+        with self.lock:
+            if self.playback_object:
+                self.playback_object.stop()
+            self.is_playing = False
+            self.current_position = 0
+
+    def play_segment_async(self, duration_ms=1000):
+        threading.Thread(target=self._play_segment, args=(duration_ms,)).start()
+
+    def _play_segment(self, duration_ms):
+        with self.lock:
+            if not self.is_playing:
+                if self.current_position + duration_ms > len(self.audio):
+                    duration_ms = len(self.audio) - self.current_position
+                segment = self.audio[self.current_position:self.current_position + duration_ms]
+                self.playback_object = sa.play_buffer(segment.raw_data, num_channels=segment.channels, bytes_per_sample=segment.sample_width, sample_rate=segment.frame_rate)
+                self.playback_object.wait_done()
+                self.current_position += duration_ms
+                if self.current_position >= len(self.audio):
+                    self.current_position = 0  # 끝에 도달했으니 처음부터 다시 시작
+
+    def apply(self, ball, border, game):
+        # 예: 게임에서 특정 이벤트 발생 시 음악 재생
+        if not self.is_playing:
+            self.play()
+        elif self.is_paused:
+            self.play()  # 일시 정지된 상태에서는 다시 재생
+        else:
+            # 재생 중에 다른 이벤트 발생 시 (예를 들어, 다른 특정 상황) 일시 정지 또는 정지 등의 조치를 취할 수 있음
+            pass
+
 
 class Ball:
     def __init__(self, position, speed, radius, color, growth, energy_loss, gravity):
@@ -300,7 +349,7 @@ class Game:
         # 다른 초기화 코드...
         
         # SoundGimmick 초기화
-        sound_file = "springy-bounce-86214.mp3"  # 소리 파일 경로
+        sound_file = "Queencards.mp3"  # 소리 파일 경로
         self.sound_gimmick = SoundGimmick(sound_file)
         
         # 기존의 gimmicks_on_collision 리스트에 추가
