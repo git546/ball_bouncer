@@ -1,10 +1,13 @@
 import pygame
-import sys
+import pygame.mixer
 from pygame import gfxdraw
+import sys
 import random
+
+import sound_ctl
 from game_configurations import configurations
 from game_configurations import colors
-import pygame.mixer
+
 
 class GimmickStrategy:
     def apply(self, ball, border, game):
@@ -84,11 +87,31 @@ class ConnectGimmick(GimmickStrategy):
 class SoundGimmick(GimmickStrategy):
     def __init__(self, sound_file):
         self.sound_file = sound_file
+        pygame.mixer.init()
+        pygame.mixer.music.load(self.sound_file)
+        self.paused = False
+        self.position = 0.0  # 재생을 중지한 위치를 저장
 
     def apply(self, ball, border, game):
-        sound_effect = pygame.mixer.Sound(self.sound_file)
-        sound_effect.play()
+        if not self.paused:
+            # 처음 재생할 때 혹은 중지 후 재생을 재개할 때
+            pygame.mixer.music.play(start=self.position)
+            self.paused = False
+        else:
+            # 음악이 일시 중지된 경우, 해당 위치에서 재생을 재개
+            pygame.mixer.music.unpause()
 
+    def pause(self):
+        # 음악을 일시 중지하고, 현재 재생 위치를 저장
+        self.position = pygame.mixer.music.get_pos() / 1000.0  # milliseconds to seconds
+        pygame.mixer.music.pause()
+        self.paused = True
+
+    def stop(self):
+        # 음악 재생을 완전히 중지하고 위치를 리셋
+        pygame.mixer.music.stop()
+        self.position = 0.0
+        self.paused = False
 
 class Ball:
     def __init__(self, position, speed, radius, color, growth, energy_loss, gravity):
@@ -170,10 +193,6 @@ class Ball:
         gfxdraw.aacircle(screen, int(self.position.x), int(self.position.y), self.radius, self.color)
         gfxdraw.filled_circle(screen, int(self.position.x), int(self.position.y), self.radius, self.color)
 
-
-
-
-
 class Border:
     def __init__(self, center, radius, thickness, inner_color, outer_color):
         self.center = pygame.math.Vector2(center)
@@ -230,22 +249,19 @@ class Border:
             # 내부 원 그리기
             pygame.draw.circle(screen, self.inner_color, self.center, self.radius)
 
-
-
-
-
-
 class Game:
     def __init__(self):
+        #프로그램 초시화, pygame과 사운드 초기화
         pygame.init()
-        pygame.mixer.init()  # 사운드 초기화
+        pygame.mixer.init()
+        
+        #화면 크기 초기화 및 창 이름 설정
         self.width, self.height = 1080, 1920
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption('Bouncing Ball Simulation with Classes')
         
         self.black = (0, 0, 0)
         self.white = (255, 255, 255)
-        self.red = (255, 0, 0)
         
         self._background_color = self.black
         
@@ -253,7 +269,6 @@ class Game:
         selected_type_key = random.choice(list(configurations.keys()))
         selected_type_key = 'line-bouncing' #임의로 설정하는 테스트용 명령
         selected_type = configurations[selected_type_key]
-        
         
         # Border 객체 초기화
         border_config = selected_type['border']

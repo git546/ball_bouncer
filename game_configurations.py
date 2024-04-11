@@ -1,9 +1,22 @@
 from design_sets import colors
 import random
 
+Game_width = 1080
+Game_height = 1920
+BG_color = random.choice(colors['black'], colors['white'])
+
+
+
 # 유형별 설정
 configurations = {
     'color_tracing': {#무지개 흔적 남는 공
+        
+        'Game_setting' : {
+            'width' : Game_width,
+            'height' : Game_height,
+            'bg_color' : BG_color,
+        },
+        
         'border': {
             'center': (550, 960),  # 고정된 중심 위치
             'radius': 350,  # 고정된 반지름
