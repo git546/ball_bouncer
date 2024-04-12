@@ -8,13 +8,13 @@ from pydub import AudioSegment
 import simpleaudio as sa
 import time
 import os
+import pyaudio
+import wave
 
 from game_configurations import configurations
 from game_configurations import colors
 
-AudioSegment.converter = r'C:\ffmpeg-2024-03-07-git-97beb63a66-full_build\bin\ffmpeg.exe'
-AudioSegment.ffprobe = r'C:\ffmpeg-2024-03-07-git-97beb63a66-full_build\bin\ffprobe.exe'
-ffmpeg_path = r'C:\ffmpeg-2024-03-07-git-97beb63a66-full_build\bin'  # 여기서 경로는 실제 ffmpeg 설치 경로로 변경해야 합니다.
+ffmpeg_path = r'C:\ffmpeg-2024-04-10-git-0e4dfa4709-full_build\bin'  # 여기서 경로는 실제 ffmpeg 설치 경로로 변경해야 합니다.
 os.environ['PATH'] += os.pathsep + ffmpeg_path
 
 class GimmickStrategy:
@@ -146,7 +146,7 @@ class SoundGimmick(GimmickStrategy):
                     duration_ms = len(self.audio) - self.current_position
                 segment = self.audio[self.current_position:self.current_position + duration_ms]
                 self.playback_object = sa.play_buffer(segment.raw_data, num_channels=segment.channels, bytes_per_sample=segment.sample_width, sample_rate=segment.frame_rate)
-                self.playback_object.wait_done()
+                #self.playback_object.wait_done()
                 self.current_position += duration_ms
                 if self.current_position >= len(self.audio):
                     self.current_position = 0  # 끝에 도달했으니 처음부터 다시 시작
@@ -161,6 +161,45 @@ class SoundGimmick(GimmickStrategy):
             # 재생 중에 다른 이벤트 발생 시 (예를 들어, 다른 특정 상황) 일시 정지 또는 정지 등의 조치를 취할 수 있음
             pass
 
+class SoundRecorder:
+    def __init__(self, output_filename):
+        self.chunk = 1024
+        self.format = pyaudio.paInt16
+        self.channels = 1  # 모노로 설정
+        self.sample_rate = 44100
+        self.frames = []
+        self.output_filename = output_filename
+        self.p = pyaudio.PyAudio()
+        self.stream = self.p.open(format=self.format,
+                                  channels=self.channels,
+                                  rate=self.sample_rate,
+                                  input=True,
+                                  frames_per_buffer=self.chunk)
+
+    def start(self):
+        self.is_recording = True
+        thread = threading.Thread(target=self.record)
+        thread.start()
+
+    def stop(self):
+        self.is_recording = False
+        self.stream.stop_stream()
+        self.stream.close()
+        self.p.terminate()
+        self.save_recording()
+
+    def record(self):
+        while self.is_recording:
+            data = self.stream.read(self.chunk)
+            self.frames.append(data)
+
+    def save_recording(self):
+        wave_file = wave.open(self.output_filename, 'wb')
+        wave_file.setnchannels(self.channels)
+        wave_file.setsampwidth(self.p.get_sample_size(self.format))
+        wave_file.setframerate(self.sample_rate)
+        wave_file.writeframes(b''.join(self.frames))
+        wave_file.close()
 
 class Ball:
     def __init__(self, position, speed, radius, color, growth, energy_loss, gravity):
@@ -304,6 +343,10 @@ class Game:
         pygame.init()
         pygame.mixer.init()
         
+        #오디오 파일 생성
+        self.recorder = SoundRecorder('game_audio.wav')
+        self.recorder.start()  # 게임 시작 시 녹음 시작
+
         #화면 크기 초기화 및 창 이름 설정
         self.width, self.height = 1080, 1920
         self.screen = pygame.display.set_mode((self.width, self.height))
@@ -431,6 +474,8 @@ class Game:
                 return
             
             clock.tick(60)
+    def close(self):
+        self.recorder.stop()  # 게임 종료 시 녹음 중지
 
 
 if __name__ == "__main__":
@@ -438,3 +483,4 @@ if __name__ == "__main__":
     while 1:
         game = Game()
         game.run()
+        game.close()
