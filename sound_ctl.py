@@ -25,7 +25,7 @@ class StreamingMusicPlayer:
             elif self.is_paused:
                 self.is_paused = False
                 self.playback_object.stop()
-
+                
     def _playback_thread(self):
         while self.current_position < len(self.audio) and self.is_playing:
             if not self.is_paused:

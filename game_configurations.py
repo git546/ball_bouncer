@@ -1,9 +1,22 @@
 from design_sets import colors
 import random
 
+Game_width = 1080
+Game_height = 1920
+BG_color = colors['black']
+
+
+
 # 유형별 설정
 configurations = {
     'color_tracing': {#무지개 흔적 남는 공
+        
+        'Game_setting' : {
+            'width' : Game_width,
+            'height' : Game_height,
+            'bg_color' : BG_color,
+        },
+        
         'border': {
             'center': (550, 960),  # 고정된 중심 위치
             'radius': 350,  # 고정된 반지름
@@ -128,7 +141,7 @@ configurations = {
             'speed': (7, 2),  # 초기 속도
             'radius': 10,  # 공의 반지름
             'color': colors['green'],  # 랜덤 색상
-            'growth': 1.1,  # 성장률
+            'growth': 1.05,  # 성장률
             'energy_loss': 1.01,  # 에너지 손실율
             'gravity': (0, random.choice([0, random.uniform(0, 1)])),
         },
