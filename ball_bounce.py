@@ -152,14 +152,7 @@ class SoundGimmick(GimmickStrategy):
                     self.current_position = 0  # 끝에 도달했으니 처음부터 다시 시작
 
     def apply(self, ball, border, game):
-        # 예: 게임에서 특정 이벤트 발생 시 음악 재생
-        if not self.is_playing:
-            self.play()
-        elif self.is_paused:
-            self.play()  # 일시 정지된 상태에서는 다시 재생
-        else:
-            # 재생 중에 다른 이벤트 발생 시 (예를 들어, 다른 특정 상황) 일시 정지 또는 정지 등의 조치를 취할 수 있음
-            pass
+            self._play_segment(250)
 
 class SoundRecorder:
     def __init__(self, output_filename):
@@ -392,7 +385,7 @@ class Game:
         # 다른 초기화 코드...
         
         # SoundGimmick 초기화
-        sound_file = "Queencards.mp3"  # 소리 파일 경로
+        sound_file = "80s-radio-tune-113798.mp3"  # 소리 파일 경로
         self.sound_gimmick = SoundGimmick(sound_file)
         
         # 기존의 gimmicks_on_collision 리스트에 추가
@@ -470,17 +463,16 @@ class Game:
                 gimmick.apply(self.ball, self.border, self)
             self.gimmicks_on_init = [] # 이후 이 리스트를 비워서 다시 적용되지 않도록 함
             
-            if self.ball.get_radius()>1000:
+            if self.ball.get_radius()>30:
                 return
             
             clock.tick(60)
+            
     def close(self):
         self.recorder.stop()  # 게임 종료 시 녹음 중지
 
 
 if __name__ == "__main__":
-    
-    while 1:
         game = Game()
         game.run()
         game.close()
