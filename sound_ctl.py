@@ -1,68 +1,43 @@
 from pydub import AudioSegment
-import simpleaudio as sa
-import threading
-import time
-from pydub.utils import which
-import os 
 
-ffmpeg_path = r'C:\ffmpeg-2024-03-07-git-97beb63a66-full_build\bin'  # 여기서 경로는 실제 ffmpeg 설치 경로로 변경해야 합니다.
-os.environ['PATH'] += os.pathsep + ffmpeg_path
+def add_collision_sounds_based_on_type(collision_times, collision_sound_path, output_path, audio_type, clip_length_ms=None):
+    """
+    주어진 시간에 맞춰 뮤직 또는 효과음을 삽입하여 무음 배경 오디오 파일을 생성하는 함수.
 
-class StreamingMusicPlayer:
-    def __init__(self, filepath):
-        self.audio = AudioSegment.from_file(filepath)
-        self.playback_object = None
-        self.current_position = 0  # 현재 재생 위치 (밀리초 단위)
-        self.is_playing = False
-        self.is_paused = False
-        self.lock = threading.Lock()
+    Args:
+    - collision_times (list[int]): 충돌이 일어나는 시간(밀리초) 리스트
+    - collision_sound_path (str): 충돌 시 재생할 오디오 파일 경로
+    - output_path (str): 결과 오디오 파일을 저장할 경로
+    - audio_type (str): 'music' 또는 'effect'를 지정하여 오디오 타입 선택
+    - clip_length_ms (int): 각 충돌에 삽입할 오디오 길이 (밀리초 단위, 'music' 타입에서만 필요)
 
-    def play(self):
-        with self.lock:
-            if not self.is_playing:
-                self.is_playing = True
-                threading.Thread(target=self._playback_thread).start()
-            elif self.is_paused:
-                self.is_paused = False
-                self.playback_object.stop()
-                
-    def _playback_thread(self):
-        while self.current_position < len(self.audio) and self.is_playing:
-            if not self.is_paused:
-                segment = self.audio[self.current_position:]
-                self.playback_object = sa.play_buffer(segment.raw_data, num_channels=segment.channels,
-                                                      bytes_per_sample=segment.sample_width, sample_rate=segment.frame_rate)
-                start_time = time.time()
-                self.playback_object.wait_done()
-                elapsed_time = (time.time() - start_time) * 1000  # 밀리초 단위로 변환
-                self.current_position += int(elapsed_time)
-            else:
-                time.sleep(0.1)  # 일시 정지 상태에서는 대기
+    Returns:
+    - None
+    """
+    # 1분 길이의 무음 오디오 생성
+    base_audio = AudioSegment.silent(duration=60000)  # 1분 = 60000 밀리초
 
-    def pause(self):
-        with self.lock:
-            if self.is_playing and not self.is_paused:
-                self.is_paused = True
-                self.playback_object.stop()
+    # 충돌 소리 파일 로드
+    collision_sound = AudioSegment.from_file(collision_sound_path)
 
-    def stop(self):
-        with self.lock:
-            self.is_playing = False
-            self.current_position = 0
-            if self.playback_object:
-                self.playback_object.stop()
-                
-    def play_segment_async(self, duration_ms=1000):
-        threading.Thread(target=self._play_segment, args=(duration_ms,)).start()
+    if audio_type == 'music':
+        # 각 충돌 시간에 해당하는 노래 부분을 잘라서 삽입 ('music')
+        for index, time in enumerate(collision_times):
+            start_clip = index * clip_length_ms
+            end_clip = start_clip + clip_length_ms
+            clip = collision_sound[start_clip:end_clip]
+            base_audio = base_audio.overlay(clip, position=time)
+    elif audio_type == 'effect':
+        # 각 충돌 시간에 동일한 효과음 삽입 ('effect')
+        for time in collision_times:
+            base_audio = base_audio.overlay(collision_sound, position=time)
 
-    def _play_segment(self, duration_ms):
-        with self.lock:
-            if self.current_position + duration_ms > len(self.audio):
-                duration_ms = len(self.audio) - self.current_position
-            segment = self.audio[self.current_position:self.current_position + duration_ms]
-            playback_object = sa.play_buffer(segment.raw_data, num_channels=segment.channels, bytes_per_sample=segment.sample_width, sample_rate=segment.frame_rate)
-            #playback_object.wait_done()
-            self.current_position += duration_ms
-            if self.current_position >= len(self.audio):
-                self.current_position = 0  # 또는 음악을 끝내고 싶다면 self.stop() 호출
+    # 결과 오디오 파일 저장
+    base_audio.export(output_path, format="mp3")
 
+# 함수 호출 예시
+# 'music' 타입으로 노래의 특정 부분을 5초, 15초, 20초 지점에 삽입
+add_collision_sounds_based_on_type([5000, 15000, 20000], "song.mp3", "output_music_collisions.mp3", 'music', 2500)
+
+# 'effect' 타입으로 효과음을 같은 타이밍에 삽입
+add_collision_sounds_based_on_type([5000, 15000, 20000], "effect_sound.mp3", "output_effect_collisions.mp3", 'effect')

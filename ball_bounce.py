@@ -8,8 +8,6 @@ from pydub import AudioSegment
 import simpleaudio as sa
 import time
 import os
-import pyaudio
-import wave
 
 from game_configurations import configurations
 from game_configurations import colors
@@ -154,45 +152,6 @@ class SoundGimmick(GimmickStrategy):
     def apply(self, ball, border, game):
             self._play_segment(250)
 
-class SoundRecorder:
-    def __init__(self, output_filename):
-        self.chunk = 1024
-        self.format = pyaudio.paInt16
-        self.channels = 1  # 모노로 설정
-        self.sample_rate = 44100
-        self.frames = []
-        self.output_filename = output_filename
-        self.p = pyaudio.PyAudio()
-        self.stream = self.p.open(format=self.format,
-                                  channels=self.channels,
-                                  rate=self.sample_rate,
-                                  input=True,
-                                  frames_per_buffer=self.chunk)
-
-    def start(self):
-        self.is_recording = True
-        thread = threading.Thread(target=self.record)
-        thread.start()
-
-    def stop(self):
-        self.is_recording = False
-        self.stream.stop_stream()
-        self.stream.close()
-        self.p.terminate()
-        self.save_recording()
-
-    def record(self):
-        while self.is_recording:
-            data = self.stream.read(self.chunk)
-            self.frames.append(data)
-
-    def save_recording(self):
-        wave_file = wave.open(self.output_filename, 'wb')
-        wave_file.setnchannels(self.channels)
-        wave_file.setsampwidth(self.p.get_sample_size(self.format))
-        wave_file.setframerate(self.sample_rate)
-        wave_file.writeframes(b''.join(self.frames))
-        wave_file.close()
 
 class Ball:
     def __init__(self, position, speed, radius, color, growth, energy_loss, gravity):
@@ -335,10 +294,6 @@ class Game:
         #프로그램 초시화, pygame과 사운드 초기화
         pygame.init()
         pygame.mixer.init()
-        
-        #오디오 파일 생성
-        self.recorder = SoundRecorder('game_audio.wav')
-        self.recorder.start()  # 게임 시작 시 녹음 시작
 
         #화면 크기 초기화 및 창 이름 설정
         self.width, self.height = 1080, 1920
@@ -468,11 +423,8 @@ class Game:
             
             clock.tick(60)
             
-    def close(self):
-        self.recorder.stop()  # 게임 종료 시 녹음 중지
 
 
 if __name__ == "__main__":
         game = Game()
         game.run()
-        game.close()
