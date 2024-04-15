@@ -3,13 +3,9 @@ import pygame.mixer
 from pygame import gfxdraw
 import sys
 import random
-import threading
-from pydub import AudioSegment
-import simpleaudio as sa
+
 import time
 import os
-import pyaudio
-import wave
 
 from game_configurations import configurations
 from game_configurations import colors
@@ -92,108 +88,22 @@ class ConnectGimmick(GimmickStrategy):
         if collision_point:
             self.collision_point_list.append(collision_point)
 
-class SoundGimmick(GimmickStrategy):
-    def __init__(self, sound_file):
-        self.sound_file = sound_file
-        self.audio = AudioSegment.from_file(self.sound_file)
-        self.playback_object = None
-        self.current_position = 0  # 현재 재생 위치 (밀리초 단위)
-        self.is_playing = False
-        self.is_paused = False
-        self.lock = threading.Lock()
+class CollisionRecorderGimmick:
+    def __init__(self):
+        self.collision_times = []
+        self.start_time = time.time() * 1000  # 시작 시간을 밀리초로 변환
 
-    def play(self):
-        with self.lock:
-            if not self.is_playing or self.is_paused:
-                self.is_playing = True
-                self.is_paused = False
-                threading.Thread(target=self._playback_thread).start()
+    def record_collision(self):
+        current_time = time.time() * 1000  # 현재 시간을 밀리초로 변환
+        collision_time = current_time - self.start_time
+        self.collision_times.append(collision_time)
 
-    def _playback_thread(self):
-        while self.current_position < len(self.audio) and self.is_playing:
-            if not self.is_paused:
-                segment = self.audio[self.current_position:]
-                self.playback_object = sa.play_buffer(segment.raw_data, num_channels=segment.channels,
-                                                      bytes_per_sample=segment.sample_width, sample_rate=segment.frame_rate)
-                start_time = time.time()
-                self.playback_object.wait_done()
-                elapsed_time = (time.time() - start_time) * 1000
-                self.current_position += int(elapsed_time)
-            else:
-                time.sleep(0.1)
-
-    def pause(self):
-        with self.lock:
-            if self.is_playing and not self.is_paused:
-                self.is_paused = True
-                if self.playback_object:
-                    self.playback_object.stop()
-
-    def stop(self):
-        with self.lock:
-            if self.playback_object:
-                self.playback_object.stop()
-            self.is_playing = False
-            self.current_position = 0
-
-    def play_segment_async(self, duration_ms=1000):
-        threading.Thread(target=self._play_segment, args=(duration_ms,)).start()
-
-    def _play_segment(self, duration_ms):
-        with self.lock:
-            if not self.is_playing:
-                if self.current_position + duration_ms > len(self.audio):
-                    duration_ms = len(self.audio) - self.current_position
-                segment = self.audio[self.current_position:self.current_position + duration_ms]
-                self.playback_object = sa.play_buffer(segment.raw_data, num_channels=segment.channels, bytes_per_sample=segment.sample_width, sample_rate=segment.frame_rate)
-                #self.playback_object.wait_done()
-                self.current_position += duration_ms
-                if self.current_position >= len(self.audio):
-                    self.current_position = 0  # 끝에 도달했으니 처음부터 다시 시작
+    def get_collision_times(self):
+        return self.collision_times
 
     def apply(self, ball, border, game):
-            self._play_segment(250)
-
-class SoundRecorder:
-    def __init__(self, output_filename):
-        self.chunk = 1024
-        self.format = pyaudio.paInt16
-        self.channels = 1  # 모노로 설정
-        self.sample_rate = 44100
-        self.frames = []
-        self.output_filename = output_filename
-        self.p = pyaudio.PyAudio()
-        self.stream = self.p.open(format=self.format,
-                                  channels=self.channels,
-                                  rate=self.sample_rate,
-                                  input=True,
-                                  frames_per_buffer=self.chunk)
-
-    def start(self):
-        self.is_recording = True
-        thread = threading.Thread(target=self.record)
-        thread.start()
-
-    def stop(self):
-        self.is_recording = False
-        self.stream.stop_stream()
-        self.stream.close()
-        self.p.terminate()
-        self.save_recording()
-
-    def record(self):
-        while self.is_recording:
-            data = self.stream.read(self.chunk)
-            self.frames.append(data)
-
-    def save_recording(self):
-        wave_file = wave.open(self.output_filename, 'wb')
-        wave_file.setnchannels(self.channels)
-        wave_file.setsampwidth(self.p.get_sample_size(self.format))
-        wave_file.setframerate(self.sample_rate)
-        wave_file.writeframes(b''.join(self.frames))
-        wave_file.close()
-
+            self.record_collision()
+            
 class Ball:
     def __init__(self, position, speed, radius, color, growth, energy_loss, gravity):
         self.position = pygame.math.Vector2(position)
@@ -335,10 +245,6 @@ class Game:
         #프로그램 초시화, pygame과 사운드 초기화
         pygame.init()
         pygame.mixer.init()
-        
-        #오디오 파일 생성
-        self.recorder = SoundRecorder('game_audio.wav')
-        self.recorder.start()  # 게임 시작 시 녹음 시작
 
         #화면 크기 초기화 및 창 이름 설정
         self.width, self.height = 1080, 1920
@@ -381,15 +287,6 @@ class Game:
         
         print(self.gimmicks_on_move)
         
-     
-        # 다른 초기화 코드...
-        
-        # SoundGimmick 초기화
-        sound_file = "80s-radio-tune-113798.mp3"  # 소리 파일 경로
-        self.sound_gimmick = SoundGimmick(sound_file)
-        
-        # 기존의 gimmicks_on_collision 리스트에 추가
-        self.gimmicks_on_collision.append(self.sound_gimmick)
     
     def set_background_color(self, value):
             if all(0 <= channel <= 255 for channel in value):
@@ -422,6 +319,9 @@ class Game:
                 gimmick_class = globals().get(gimmick_name)
                 if gimmick_class:
                     self.gimmicks_on_move.append(gimmick_class())
+        
+        self.collision_recorder = CollisionRecorderGimmick()
+        self.gimmicks_on_collision.append(self.collision_recorder)
         
                             
     def swap_border_and_background_colors(self):
@@ -463,16 +363,15 @@ class Game:
                 gimmick.apply(self.ball, self.border, self)
             self.gimmicks_on_init = [] # 이후 이 리스트를 비워서 다시 적용되지 않도록 함
             
-            if self.ball.get_radius()>30:
-                return
+            if self.ball.get_radius()>1000:
+                break
             
             clock.tick(60)
-            
-    def close(self):
-        self.recorder.stop()  # 게임 종료 시 녹음 중지
+    
+        pygame.quit()
+        sys.exit()
 
 
 if __name__ == "__main__":
         game = Game()
         game.run()
-        game.close()
