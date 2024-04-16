@@ -262,7 +262,7 @@ class Game:
         
         # 랜덤으로 유형 선택
         selected_type_key = random.choice(list(configurations.keys()))
-        selected_type_key = 'line-bouncing' #임의로 설정하는 테스트용 명령
+        selected_type_key = 'mono-swap' #임의로 설정하는 테스트용 명령
         selected_type = configurations[selected_type_key]
         
         # Border 객체 초기화
@@ -381,7 +381,6 @@ class Game:
             
         self.video.release()    
         pygame.quit()
-        sys.exit()
 
 
 if __name__ == "__main__":

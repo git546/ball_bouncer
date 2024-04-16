@@ -27,7 +27,7 @@ configurations = {
         
         'ball': {
             'position': (540, 960),  # 초기 위치
-            'speed': (1, 1),  # 초기 속도
+            'speed': (3, 3),  # 초기 속도
             'radius': 10,  # 공의 반지름
             'color': colors['black'],  # 랜덤 색상
             'growth': 1.1,  # 성장률
@@ -37,8 +37,8 @@ configurations = {
         
         'gimmick': {
             'on_init' : {
-                'BorderToggleGimmick' : 1,
-                'Tracer_Gimmick' : 1,
+                'BorderToggleGimmick' : 0,
+                'Tracer_Gimmick' : 0,
                 },
             'on_collision': {
                 'ColorSwapGimmick': 0,
@@ -49,7 +49,6 @@ configurations = {
                 'GravityGimmick': 0,
                 'TracerMakeGimmick': 0,
                 'ColorFadeGimmick' : 1,
-                'ConnectGimmick' : 1,
                 
             }
         }
@@ -65,7 +64,7 @@ configurations = {
         
         'ball': {
             'position': (550, 960),  # 초기 위치
-            'speed': (2, 2),  # 초기 속도
+            'speed': (5, 2),  # 초기 속도
             'radius': 10,  # 공의 반지름
             'color': colors['white'],  # 랜덤 색상
             'growth': 1.1,  # 성장률

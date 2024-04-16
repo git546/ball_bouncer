@@ -1,6 +1,10 @@
 from pydub import AudioSegment
+import os
 
-def add_collision_sounds_based_on_type(collision_times, collision_sound_path, output_path, audio_type, clip_length_ms=None):
+ffmpeg_path = r'C:\ffmpeg-2024-04-10-git-0e4dfa4709-full_build\bin'  # 여기서 경로는 실제 ffmpeg 설치 경로로 변경해야 합니다.
+os.environ['PATH'] += os.pathsep + ffmpeg_path
+
+def add_collision_sounds_based_on_type(collision_times, collision_sound_path, output_path, audio_type, clip_length_ms=2500):
     """
     주어진 시간에 맞춰 뮤직 또는 효과음을 삽입하여 무음 배경 오디오 파일을 생성하는 함수.
 
@@ -14,19 +18,22 @@ def add_collision_sounds_based_on_type(collision_times, collision_sound_path, ou
     Returns:
     - None
     """
+    # 충돌 소리 파일 로드
+    collision_sound = AudioSegment.from_file(collision_sound_path).apply_gain(60)
+
     # 1분 길이의 무음 오디오 생성
     base_audio = AudioSegment.silent(duration=60000)  # 1분 = 60000 밀리초
-
-    # 충돌 소리 파일 로드
-    collision_sound = AudioSegment.from_file(collision_sound_path)
-
     if audio_type == 'music':
-        # 각 충돌 시간에 해당하는 노래 부분을 잘라서 삽입 ('music')
+        # 각 충돌 시간에 해당하는 연속된 노래 부분을 잘라서 삽입 ('music')
+        total_length = len(collision_sound)
         for index, time in enumerate(collision_times):
             start_clip = index * clip_length_ms
             end_clip = start_clip + clip_length_ms
+            if end_clip > total_length:
+                end_clip = total_length
             clip = collision_sound[start_clip:end_clip]
             base_audio = base_audio.overlay(clip, position=time)
+            
     elif audio_type == 'effect':
         # 각 충돌 시간에 동일한 효과음 삽입 ('effect')
         for time in collision_times:
@@ -35,9 +42,8 @@ def add_collision_sounds_based_on_type(collision_times, collision_sound_path, ou
     # 결과 오디오 파일 저장
     base_audio.export(output_path, format="mp3")
 
+"""
 # 함수 호출 예시
 # 'music' 타입으로 노래의 특정 부분을 5초, 15초, 20초 지점에 삽입
-add_collision_sounds_based_on_type([5000, 15000, 20000], "song.mp3", "output_music_collisions.mp3", 'music', 2500)
-
-# 'effect' 타입으로 효과음을 같은 타이밍에 삽입
-add_collision_sounds_based_on_type([5000, 15000, 20000], "effect_sound.mp3", "output_effect_collisions.mp3", 'effect')
+add_collision_sounds_based_on_type([5000, 15000, 20000], "Queencards.mp3", "game_audio.mp3", 'music', 2500)
+"""
