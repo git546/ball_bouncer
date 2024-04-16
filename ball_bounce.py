@@ -7,6 +7,10 @@ import random
 import time
 import os
 
+import cv2
+from pygame.locals import QUIT
+import numpy as np
+
 from game_configurations import configurations
 from game_configurations import colors
 
@@ -285,8 +289,8 @@ class Game:
         
         self.initialize_gimmicks(selected_type.get('gimmick', {}))
         
-        print(self.gimmicks_on_move)
-        
+        self.fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        self.video = cv2.VideoWriter('game_video.avi', self.fourcc, 30, (self.width, self.height))
     
     def set_background_color(self, value):
             if all(0 <= channel <= 255 for channel in value):
@@ -330,12 +334,12 @@ class Game:
     
     def run(self):
         clock = pygame.time.Clock()
-      
-        while True:
+        
+        running = True
+        while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
+                    running = False
                     
             if self.border.is_inner:
                 self.screen.fill(self._background_color)
@@ -363,11 +367,19 @@ class Game:
                 gimmick.apply(self.ball, self.border, self)
             self.gimmicks_on_init = [] # 이후 이 리스트를 비워서 다시 적용되지 않도록 함
             
+            # Capture the frame
+            frame = np.array(pygame.surfarray.array3d(self.screen))
+            frame = cv2.transpose(frame)
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Convert it to BGR
+            self.video.write(frame)  # Write frame to video
+
+            
             if self.ball.get_radius()>1000:
                 break
             
             clock.tick(60)
-    
+            
+        self.video.release()    
         pygame.quit()
         sys.exit()
 
