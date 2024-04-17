@@ -4,6 +4,8 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.errors import HttpError
 
+SCOPES = ['https://www.googleapis.com/auth/youtube.upload']
+
 def authenticate(client_secret_files):
     for client_secrets_file in client_secret_files:
         try:
@@ -44,7 +46,8 @@ def upload_video(youtube, file_path, title, description, category_id, keywords):
 
 if __name__ == '__main__':
     client_secret_files = [
-        'client_secrets_1.json',
+        'client_secrets.json'
+        'client_secrets.json',
         'client_secrets_2.json',
         'client_secrets_3.json'
     ]
