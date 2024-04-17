@@ -56,7 +56,7 @@ configurations = {
     'mono-swap': {#흑백 색깔바꿈
         'border': {
             'center': (540, 960),  # 고정된 중심 위치
-            'radius': 350,  # 고정된 반지름
+            'radius': 500,  # 고정된 반지름
             'thickness': 10,  # 고정된 두께
             'inner_color': colors['black'],  # 내부 색상
             'outer_color': colors['white'],  # 외부 색상

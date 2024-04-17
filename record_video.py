@@ -24,13 +24,16 @@ def run_game_and_create_audio(video_filename='game_video.avi', collision_sound_p
 
 def merge_audio_video(audio_filename='game_audio.mp3', video_filename='game_video.avi', output_filename='final_output.mp4'):
     command = [
-        'ffmpeg', 
+        'ffmpeg',
         '-y',
-        '-i', video_filename, 
+        '-i', video_filename,
         '-i', audio_filename,
-        '-c:v', 'copy', 
-        '-c:a', 'aac', 
-        '-strict', 'experimental', 
+        '-c:v', 'libx264',  # H.264 코덱 사용
+        '-crf', '18',  # 품질을 18로 설정, 0이 최고 (무손실)이고 51이 최저 품질
+        '-preset', 'slow',  # 인코딩 속도와 압축 효율 사이의 균형 설정, 더 좋은 압축을 위해 slow 사용
+        '-c:a', 'aac',  # 오디오 코덱 AAC
+        '-strict', 'experimental',
+        '-b:a', '192k',  # 오디오 비트레이트를 192 kbps로 설정
         output_filename
     ]
     try:
