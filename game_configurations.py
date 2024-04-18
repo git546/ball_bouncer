@@ -58,7 +58,7 @@ configurations = {
             'center': (540, 960),  # 고정된 중심 위치
             'radius': 500,  # 고정된 반지름
             'thickness': 10,  # 고정된 두께
-            'inner_color': colors['black'],  # 내부 색상
+            'inner_color': colors['white'],  # 내부 색상
             'outer_color': colors['white'],  # 외부 색상
         },
         
@@ -66,7 +66,7 @@ configurations = {
             'position': (550, 960),  # 초기 위치
             'speed': (5, 2),  # 초기 속도
             'radius': 10,  # 공의 반지름
-            'color': colors['white'],  # 랜덤 색상
+            'color': colors['black'],  # 랜덤 색상
             'growth': 1.1,  # 성장률
             'energy_loss': 1.01,  # 에너지 손실율
             'gravity': (0, random.choice([0, random.uniform(0, 1)])),

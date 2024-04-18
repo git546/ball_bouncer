@@ -22,7 +22,7 @@ def add_collision_sounds_based_on_type(collision_times, collision_sound_path, ou
     collision_sound = AudioSegment.from_file(collision_sound_path).apply_gain(60)
 
     # 1분 길이의 무음 오디오 생성
-    base_audio = AudioSegment.silent(duration=6000)  # 1분 = 60000 밀리초
+    base_audio = AudioSegment.silent(duration=59000)  # 1분 = 60000 밀리초
     if audio_type == 'music':
         # 각 충돌 시간에 해당하는 연속된 노래 부분을 잘라서 삽입 ('music')
         total_length = len(collision_sound)
@@ -42,8 +42,7 @@ def add_collision_sounds_based_on_type(collision_times, collision_sound_path, ou
     # 결과 오디오 파일 저장
     base_audio.export(output_path, format="mp3")
 
-"""
+
 # 함수 호출 예시
 # 'music' 타입으로 노래의 특정 부분을 5초, 15초, 20초 지점에 삽입
-add_collision_sounds_based_on_type([5000, 15000, 20000], "Queencards.mp3", "game_audio.mp3", 'music', 2500)
-"""
+#add_collision_sounds_based_on_type([5000, 6000, 20000], "bounce.mp3", "game_audio.mp3", 'effect', 2500)

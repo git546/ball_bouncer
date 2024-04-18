@@ -290,7 +290,7 @@ class Game:
         self.initialize_gimmicks(selected_type.get('gimmick', {}))
         
         self.fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        self.video = cv2.VideoWriter('game_video.avi', self.fourcc, 30, (self.width, self.height))
+        self.video = cv2.VideoWriter('game_video.avi', self.fourcc, 60, (self.width, self.height), True)
     
     def set_background_color(self, value):
             if all(0 <= channel <= 255 for channel in value):
@@ -361,7 +361,7 @@ class Game:
             for gimmick in self.gimmicks_on_move:
                 gimmick.apply(self.ball, self.border, self)
             
-            pygame.display.flip()
+            
             
             for gimmick in self.gimmicks_on_init:
                 gimmick.apply(self.ball, self.border, self)
@@ -373,6 +373,8 @@ class Game:
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Convert it to BGR
             self.video.write(frame)  # Write frame to video
 
+            
+            pygame.display.flip()
             
             if self.ball.get_radius()>1000:
                 break
