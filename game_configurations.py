@@ -37,7 +37,7 @@ configurations = {
         
         'gimmick': {
             'on_init' : {
-                'BorderToggleGimmick' : 0,
+                'BorderToggleGimmick' : 1,
                 'Tracer_Gimmick' : 0,
                 },
             'on_collision': {
@@ -48,12 +48,12 @@ configurations = {
             'on_move': {
                 'GravityGimmick': 0,
                 'TracerMakeGimmick': 0,
-                'ColorFadeGimmick' : 1,
+                'BallBorderFadeGimmick' : 1,
                 
             }
         }
     },
-    'mono-swap': {#흑백 색깔바꿈
+    'mono_swap': {#흑백 색깔바꿈
         'border': {
             'center': (540, 960),  # 고정된 중심 위치
             'radius': 500,  # 고정된 반지름
@@ -89,7 +89,7 @@ configurations = {
             }
         }
     },
-    'mono-tracing': {#흑백 채우기
+    'mono_tracing': {#흑백 채우기
         'border': {
             'center': (540, 960),  # 고정된 중심 위치
             'radius': 350,  # 고정된 반지름
@@ -126,7 +126,7 @@ configurations = {
         }
     },
     
-    'line-bouncing': {#흑백 채우기
+    'line_bouncing': {#흑백 채우기
         'border': {
             'center': (540, 960),  # 고정된 중심 위치
             'radius': 350,  # 고정된 반지름

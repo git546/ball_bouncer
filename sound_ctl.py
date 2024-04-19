@@ -4,7 +4,7 @@ import os
 ffmpeg_path = r'C:\ffmpeg-2024-04-10-git-0e4dfa4709-full_build\bin'  # 여기서 경로는 실제 ffmpeg 설치 경로로 변경해야 합니다.
 os.environ['PATH'] += os.pathsep + ffmpeg_path
 
-def add_collision_sounds_based_on_type(collision_times, collision_sound_path, output_path, audio_type, clip_length_ms=2500):
+def add_collision_sounds_based_on_type(collision_times, collision_sound_path, output_path, audio_type, video_length, clip_length_ms=2500):
     """
     주어진 시간에 맞춰 뮤직 또는 효과음을 삽입하여 무음 배경 오디오 파일을 생성하는 함수.
 
@@ -22,7 +22,7 @@ def add_collision_sounds_based_on_type(collision_times, collision_sound_path, ou
     collision_sound = AudioSegment.from_file(collision_sound_path).apply_gain(60)
 
     # 1분 길이의 무음 오디오 생성
-    base_audio = AudioSegment.silent(duration=59000)  # 1분 = 60000 밀리초
+    base_audio = AudioSegment.silent(duration=video_length)  # 1분 = 60000 밀리초
     if audio_type == 'music':
         # 각 충돌 시간에 해당하는 연속된 노래 부분을 잘라서 삽입 ('music')
         total_length = len(collision_sound)

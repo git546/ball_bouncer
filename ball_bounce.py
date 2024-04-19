@@ -1,14 +1,12 @@
 import pygame
 import pygame.mixer
 from pygame import gfxdraw
-import sys
 import random
 
 import time
 import os
 
 import cv2
-from pygame.locals import QUIT
 import numpy as np
 
 from game_configurations import configurations
@@ -50,21 +48,44 @@ class ColorFadeGimmick(GimmickStrategy):
         self.current_index = 0
         self.t = 0.0  # 현재 보간 비율
 
-    def apply(self, ball, border, game):
+    def interpolate_color(self):
         # 현재 색상과 다음 색상 계산
         start_color = self.rainbow_colors[self.current_index]
         end_color = self.rainbow_colors[(self.current_index + 1) % len(self.rainbow_colors)]
-        
         # 보간된 색상 적용
         interpolated_color = lerp_color(start_color, end_color, self.t)
-        ball.color = interpolated_color
-        border.outer_color = interpolated_color
-        
-        # 보간 비율 업데이트
+        return interpolated_color
+
+    def update_color_index(self):
         self.t += 0.005  # 보간 속도 조절
         if self.t >= 1.0:
             self.t = 0.0
             self.current_index = (self.current_index + 1) % len(self.rainbow_colors)
+
+class BorderFadeGimmick(ColorFadeGimmick):
+    def apply(self, ball, border, game):
+        interpolated_color = self.interpolate_color()
+        border.outer_color = interpolated_color
+        self.update_color_index()
+
+class BallFadeGimmick(ColorFadeGimmick):
+    def apply(self, ball, border, game):
+        interpolated_color = self.interpolate_color()
+        ball.color = interpolated_color
+        self.update_color_index()
+
+class BallBorderFadeGimmick(ColorFadeGimmick):
+    def apply(self, ball, border, game):
+        interpolated_color = self.interpolate_color()
+        ball.border_color = interpolated_color
+        self.update_color_index()
+
+class BackgroundFadeGimmick(ColorFadeGimmick):
+    def apply(self, ball, border, game):
+        interpolated_color = self.interpolate_color()
+        game.set_background_color(interpolated_color)
+        self.update_color_index()
+
 
 class BorderToggleGimmick(GimmickStrategy):#테두리 만드는 기믹
     def apply(self, ball, border, game):
@@ -262,7 +283,7 @@ class Game:
         
         # 랜덤으로 유형 선택
         selected_type_key = random.choice(list(configurations.keys()))
-        selected_type_key = 'mono-swap' #임의로 설정하는 테스트용 명령
+        selected_type_key = 'color_tracing' #임의로 설정하는 테스트용 명령
         selected_type = configurations[selected_type_key]
         
         # Border 객체 초기화
@@ -379,7 +400,7 @@ class Game:
             if self.ball.get_radius()>1000:
                 break
             
-            clock.tick(60)
+            clock.tick(120)
             
         self.video.release()    
         pygame.quit()
