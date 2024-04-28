@@ -64,4 +64,4 @@ def add_collision_sounds_based_on_type(collision_times, collision_sound_path, ou
     # 결과 오디오 파일 저장
     base_audio.export(output_path, format="mp3")
 
-add_collision_sounds_based_on_type(collision_times, collision_sound_path, output_path, audio_type)
+#add_collision_sounds_based_on_type(collision_times, collision_sound_path, output_path, audio_type)
