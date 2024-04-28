@@ -47,9 +47,6 @@ def upload_video(youtube, file_path, title, description, category_id, keywords):
 if __name__ == '__main__':
     client_secret_files = [
         'client_secrets.json'
-        'client_secrets.json',
-        'client_secrets_2.json',
-        'client_secrets_3.json'
     ]
     youtube = authenticate(client_secret_files)
     upload_video(youtube, 'final_output.mp4', 'My YouTube Short', 'This is a short video.', '22', 'funny, short video')

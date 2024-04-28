@@ -7,8 +7,8 @@ from sound_ctl import add_collision_sounds_based_on_type
 FFMPEG_PATH = os.environ.get('FFMPEG_PATH', r'C:\ffmpeg-2024-04-10-git-0e4dfa4709-full_build\bin')
 os.environ['PATH'] += os.pathsep + FFMPEG_PATH
 
-def run_game_and_create_audio(video_filename='game_video.avi', collision_sound_path='bounce.mp3',
-                              audio_type='effect', clip_length_ms=1000, output_audio='game_audio.mp3'):
+def run_game_and_create_audio(video_filename='game_video.avi', collision_sound_path='test.mp3',
+                              audio_type='music', clip_length_ms=1000, output_audio='game_audio.mp3'):
     print("Starting game...")
     game = Game()
     game.run()
@@ -29,7 +29,7 @@ def merge_audio_video(audio_filename='game_audio.mp3', video_filename='game_vide
         '-i', video_filename,
         '-i', audio_filename,
         '-c:v', 'libx264',  # H.264 코덱 사용
-        '-crf', '0',  # 품질을 18로 설정, 0이 최고 (무손실)이고 51이 최저 품질
+        '-crf', '23',  # 품질을 18로 설정, 0이 최고 (무손실)이고 51이 최저 품질
         '-preset', 'slow',  # 인코딩 속도와 압축 효율 사이의 균형 설정, 더 좋은 압축을 위해 slow 사용
         '-c:a', 'aac',  # 오디오 코덱 AAC
         '-strict', 'experimental',
