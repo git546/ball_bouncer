@@ -1,27 +1,37 @@
 import os
+import random
 import subprocess
 from ball_bounce import Game
 from sound_ctl import add_collision_sounds_based_on_type
-import time 
 
 # Constants for paths and filenames can be set here or read from environment/config
-FFMPEG_PATH = os.environ.get('FFMPEG_PATH', r'ffmpeg-2024-04-10-git-0e4dfa4709-full_build\bin')
+FFMPEG_PATH = os.environ.get('FFMPEG_PATH', r'C:\ffmpeg-2024-04-10-git-0e4dfa4709-full_build\bin')
 os.environ['PATH'] += os.pathsep + FFMPEG_PATH
 
-def run_game_and_create_audio(video_filename='game_video.avi', collision_sound_path='bounce.mp3',
-                              audio_type='effect', clip_length_ms=1000, output_audio='game_audio.mp3'):
+def select_random_file(folder):
+    """Given a folder, returns the path of a random file from that folder."""
+    files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
+    if files:
+        return os.path.join(folder, random.choice(files))
+    return None
+
+def run_game_and_create_audio(video_filename='game_video.avi', collision_sound_path=None,
+                              audio_type='music', clip_length_ms=1000, output_audio='game_audio.mp3'):
     print("Starting game...")
-    start_time = time.time()  # 게임 시작 시간 기록
     game = Game()
     game.run()
     print("Game ended.")
-    end_time = time.time()  # 게임 종료 시간 기록
-    game_duration_ms = int((end_time - start_time) * 1000)  # 게임 길이를 밀리초로 변환
+
     collision_times = getattr(game, 'collision_recorder', None).get_collision_times() if game else []
     if collision_times:
         print(f"Collision times recorded: {collision_times}")
-        add_collision_sounds_based_on_type(collision_times, collision_sound_path, output_audio, audio_type, game_duration_ms, clip_length_ms)
-        print(f"Audio file created: {output_audio}")
+        folder = 'music' if audio_type == 'music' else 'effect'
+        collision_sound_path = select_random_file(folder)
+        if collision_sound_path:
+            add_collision_sounds_based_on_type(collision_times, collision_sound_path, output_audio, audio_type, clip_length_ms)
+            print(f"Audio file created: {output_audio}")
+        else:
+            print("No audio file found in the specified folder.")
     else:
         print("No collision times recorded.")
 

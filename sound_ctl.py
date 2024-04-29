@@ -1,10 +1,11 @@
 from pydub import AudioSegment
 import os
 
-ffmpeg_path = r'C:\ffmpeg-2024-04-10-git-0e4dfa4709-full_build\bin'  # 여기서 경로는 실제 ffmpeg 설치 경로로 변경해야 합니다.
+# ffmpeg 환경 설정
+ffmpeg_path = r'C:\ffmpeg-2024-04-10-git-0e4dfa4709-full_build\bin'  # 실제 ffmpeg 설치 경로로 변경하세요.
 os.environ['PATH'] += os.pathsep + ffmpeg_path
 
-def add_collision_sounds_based_on_type(collision_times, collision_sound_path, output_path, audio_type, video_length, clip_length_ms=2500):
+def add_collision_sounds_based_on_type(collision_times, collision_sound_path, output_path, audio_type, clip_length_ms=2500):
     """
     주어진 시간에 맞춰 뮤직 또는 효과음을 삽입하여 무음 배경 오디오 파일을 생성하는 함수.
 
@@ -19,30 +20,37 @@ def add_collision_sounds_based_on_type(collision_times, collision_sound_path, ou
     - None
     """
     # 충돌 소리 파일 로드
-    collision_sound = AudioSegment.from_file(collision_sound_path).apply_gain(60)
+    collision_sound = AudioSegment.from_file(collision_sound_path).apply_gain(20)
 
     # 1분 길이의 무음 오디오 생성
-    base_audio = AudioSegment.silent(duration=video_length)  # 1분 = 60000 밀리초
+    base_audio = AudioSegment.silent(duration=59000)  # 약 1분 = 59000 밀리초
+
     if audio_type == 'music':
-        # 각 충돌 시간에 해당하는 연속된 노래 부분을 잘라서 삽입 ('music')
-        total_length = len(collision_sound)
-        for index, time in enumerate(collision_times):
-            start_clip = index * clip_length_ms
-            end_clip = start_clip + clip_length_ms
-            if end_clip > total_length:
-                end_clip = total_length
-            clip = collision_sound[start_clip:end_clip]
-            base_audio = base_audio.overlay(clip, position=time)
-            
+        # 충돌 시간 병합을 위한 처리
+        collision_times.sort()
+        merged_times = []
+        current_start = collision_times[0]
+        current_end = current_start + clip_length_ms
+
+        for time in collision_times[1:]:
+            if time <= current_end:  # 현재 시간이 이전 시간과 겹치면 병합
+                current_end = max(current_end, time + clip_length_ms)
+            else:
+                merged_times.append((current_start, current_end))
+                current_start = time
+                current_end = time + clip_length_ms
+        merged_times.append((current_start, current_end))  # 마지막 구간 추가
+
+        # 병합된 시간에 따라 오디오 삽입
+        for start, end in merged_times:
+            duration = end - start
+            clip = collision_sound[:duration]
+            base_audio = base_audio.overlay(clip, position=start)
+
     elif audio_type == 'effect':
-        # 각 충돌 시간에 동일한 효과음 삽입 ('effect')
+        # 각 충돌 시간에 동일한 효과음 동시 재생
         for time in collision_times:
             base_audio = base_audio.overlay(collision_sound, position=time)
 
     # 결과 오디오 파일 저장
     base_audio.export(output_path, format="mp3")
-
-
-# 함수 호출 예시
-# 'music' 타입으로 노래의 특정 부분을 5초, 15초, 20초 지점에 삽입
-#add_collision_sounds_based_on_type([5000, 6000, 20000], "bounce.mp3", "game_audio.mp3", 'effect', 2500)
