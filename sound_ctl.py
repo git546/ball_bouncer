@@ -5,6 +5,12 @@ import os
 ffmpeg_path = r'C:\ffmpeg-2024-04-10-git-0e4dfa4709-full_build\bin'  # 실제 ffmpeg 설치 경로로 변경하세요.
 os.environ['PATH'] += os.pathsep + ffmpeg_path
 
+# 예제 데이터 설정
+collision_times = [1000, 2500, 5000, 10000]  # 밀리초 단위로 충돌 시간을 지정합니다.
+collision_sound_path = "test.mp3"  # 실제 존재하는 파일 경로로 변경해야 합니다.
+output_path = "output_audio.mp3"  # 출력 파일 경로
+audio_type = "music"  # 오디오 타입을 'music'으로 설정
+
 def add_collision_sounds_based_on_type(collision_times, collision_sound_path, output_path, audio_type, clip_length_ms=2500):
     """
     주어진 시간에 맞춰 뮤직 또는 효과음을 삽입하여 무음 배경 오디오 파일을 생성하는 함수.
@@ -20,7 +26,7 @@ def add_collision_sounds_based_on_type(collision_times, collision_sound_path, ou
     - None
     """
     # 충돌 소리 파일 로드
-    collision_sound = AudioSegment.from_file(collision_sound_path).apply_gain(20)
+    collision_sound = AudioSegment.from_file(collision_sound_path).apply_gain(0)
 
     # 1분 길이의 무음 오디오 생성
     base_audio = AudioSegment.silent(duration=59000)  # 약 1분 = 59000 밀리초
@@ -32,6 +38,7 @@ def add_collision_sounds_based_on_type(collision_times, collision_sound_path, ou
         current_start = collision_times[0]
         current_end = current_start + clip_length_ms
 
+
         for time in collision_times[1:]:
             if time <= current_end:  # 현재 시간이 이전 시간과 겹치면 병합
                 current_end = max(current_end, time + clip_length_ms)
@@ -42,10 +49,12 @@ def add_collision_sounds_based_on_type(collision_times, collision_sound_path, ou
         merged_times.append((current_start, current_end))  # 마지막 구간 추가
 
         # 병합된 시간에 따라 오디오 삽입
+        offset = 0  # 오디오 클립에서 시작점을 계산하기 위한 오프셋
         for start, end in merged_times:
             duration = end - start
-            clip = collision_sound[:duration]
+            clip = collision_sound[offset:offset + duration]
             base_audio = base_audio.overlay(clip, position=start)
+            offset = (offset + duration) % len(collision_sound)  # 다음 클립의 시작점을 업데이트
 
     elif audio_type == 'effect':
         # 각 충돌 시간에 동일한 효과음 동시 재생
@@ -54,3 +63,5 @@ def add_collision_sounds_based_on_type(collision_times, collision_sound_path, ou
 
     # 결과 오디오 파일 저장
     base_audio.export(output_path, format="mp3")
+
+#add_collision_sounds_based_on_type(collision_times, collision_sound_path, output_path, audio_type)
