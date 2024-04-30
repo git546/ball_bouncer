@@ -19,3 +19,8 @@ __pycache__/sound_ctl.cpython-311.pyc
 *.mp3
 *.mp4
 /ffmpeg-2024-04-10-git-0e4dfa4709-full_build
+*.mp4
+*.avi
+*.mp3
+*.mp4
+*.pkl
