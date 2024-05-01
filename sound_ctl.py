@@ -6,12 +6,12 @@ ffmpeg_path = r'C:\ffmpeg-2024-04-10-git-0e4dfa4709-full_build\bin'  # 실제 ff
 os.environ['PATH'] += os.pathsep + ffmpeg_path
 
 # 예제 데이터 설정
-collision_times = [1000, 2500, 5000, 10000]  # 밀리초 단위로 충돌 시간을 지정합니다.
-collision_sound_path = "test.mp3"  # 실제 존재하는 파일 경로로 변경해야 합니다.
+collision = [1000, 2500, 5000, 10000]  # 밀리초 단위로 충돌 시간을 지정합니다.
+collision_sound_path = "music/test.mp3"  # 실제 존재하는 파일 경로로 변경해야 합니다.
 output_path = "output_audio.mp3"  # 출력 파일 경로
 audio_type = "music"  # 오디오 타입을 'music'으로 설정
 
-def add_collision_sounds_based_on_type(collision_times, collision_sound_path, output_path, audio_type, clip_length_ms=2500):
+def add_collision_sounds_based_on_type(collision_times, collision_sound_path, output_path, audio_type, clip_length_ms, video_duration):
     """
     주어진 시간에 맞춰 뮤직 또는 효과음을 삽입하여 무음 배경 오디오 파일을 생성하는 함수.
 
@@ -29,7 +29,7 @@ def add_collision_sounds_based_on_type(collision_times, collision_sound_path, ou
     collision_sound = AudioSegment.from_file(collision_sound_path).apply_gain(0)
 
     # 1분 길이의 무음 오디오 생성
-    base_audio = AudioSegment.silent(duration=59000)  # 약 1분 = 59000 밀리초
+    base_audio = AudioSegment.silent(duration=video_duration)  # 약 1분 = 59000 밀리초
 
     if audio_type == 'music':
         # 충돌 시간 병합을 위한 처리

@@ -1,3 +1,4 @@
+import cv2
 import os
 import random
 import subprocess
@@ -15,12 +16,42 @@ def select_random_file(folder):
         return os.path.join(folder, random.choice(files))
     return None
 
-def run_game_and_create_audio(video_filename='game_video.avi', collision_sound_path=None,
-                              audio_type='music', clip_length_ms=1000, output_audio='game_audio.mp3'):
-    print("Starting game...")
-    game = Game()
-    game.run()
-    print("Game ended.")
+def get_video_duration(filename):
+    """ Return the duration of a video in seconds """
+    video = cv2.VideoCapture(filename)
+    if not video.isOpened():
+        return None
+    fps = video.get(cv2.CAP_PROP_FPS)
+    frame_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+    duration = frame_count / fps
+    video.release()
+    return duration
+
+def trim_video(input_filename, output_filename, start_time, end_time):
+    """ Trim the video file to the desired duration """
+    command = [
+        'ffmpeg', '-i', input_filename,
+        '-ss', str(start_time), '-to', str(end_time),
+        '-c', 'copy', output_filename
+    ]
+    subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+def run_game_and_create_audio(video_filename='game_video.avi', output_audio='game_audio.mp3',
+                              audio_type='music', clip_length_ms=1000, target_duration=75):
+    while True:
+        print("Starting game...")
+        game = Game()
+        game.run()
+        print("Game ended.")
+
+        video_duration = get_video_duration(video_filename)
+        print(f"Video duration: {video_duration:.2f} seconds")
+        
+        if video_duration > target_duration:
+            print("Video is too long, restarting...")
+            continue
+        elif video_duration < target_duration:
+            break
 
     collision_times = getattr(game, 'collision_recorder', None).get_collision_times() if game else []
     if collision_times:
@@ -28,7 +59,8 @@ def run_game_and_create_audio(video_filename='game_video.avi', collision_sound_p
         folder = 'music' if audio_type == 'music' else 'effect'
         collision_sound_path = select_random_file(folder)
         if collision_sound_path:
-            add_collision_sounds_based_on_type(collision_times, collision_sound_path, output_audio, audio_type, clip_length_ms)
+            clip_length_ms = 00#사운드 길이
+            add_collision_sounds_based_on_type(collision_times, collision_sound_path, output_audio, audio_type, clip_length_ms, video_duration*1000)
             print(f"Audio file created: {output_audio}")
         else:
             print("No audio file found in the specified folder.")
