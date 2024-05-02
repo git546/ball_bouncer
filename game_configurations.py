@@ -49,6 +49,7 @@ configurations = {
                 'GravityGimmick': 0,
                 'TracerMakeGimmick': 0,
                 'BallBorderFadeGimmick' : 1,
+                'EchoGimmick' : 1,
                 
             }
         }

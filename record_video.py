@@ -27,14 +27,20 @@ def get_video_duration(filename):
     video.release()
     return duration
 
-def trim_video(input_filename, output_filename, start_time, end_time):
-    """ Trim the video file to the desired duration """
+def trim_video(input_filename, output_filename, video_duration):
+    """ Trim the video file to keep the last 60 seconds """
+    start_time = max(0, video_duration - 60)  # Ensure start_time is not negative
     command = [
         'ffmpeg', '-i', input_filename,
-        '-ss', str(start_time), '-to', str(end_time),
+        '-ss', str(start_time), '-t', '60',  # '-t' specifies the duration to keep
         '-c', 'copy', output_filename
     ]
     subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+def adjust_collision_times(collision_times, cut_time):
+    """ Adjust collision times based on the trimmed video start time """
+    adjusted_times = [time - cut_time for time in collision_times if time > cut_time]
+    return adjusted_times
 
 def run_game_and_create_audio(video_filename='game_video.avi', output_audio='game_audio.mp3',
                               audio_type='music', clip_length_ms=1000, target_duration=75):
@@ -50,17 +56,26 @@ def run_game_and_create_audio(video_filename='game_video.avi', output_audio='gam
         if video_duration > target_duration:
             print("Video is too long, restarting...")
             continue
-        elif video_duration < target_duration:
-            break
+        
+        # Calculate the amount to trim from the start of the video
+        cut_time = max(0, video_duration - 60)
+        
+        if video_duration > 60:
+            print("Trimming video to keep the last 60 seconds...")
+            trim_video(video_filename, video_filename, video_duration - 60, video_duration)
+            video_duration = 60  # Update video duration after trimming
+        break
 
     collision_times = getattr(game, 'collision_recorder', None).get_collision_times() if game else []
     if collision_times:
         print(f"Collision times recorded: {collision_times}")
+        adjusted_collision_times = adjust_collision_times(collision_times, cut_time * 1000)
+        print(f"Adjusted collision times: {adjusted_collision_times}")
+        
         folder = 'music' if audio_type == 'music' else 'effect'
         collision_sound_path = select_random_file(folder)
         if collision_sound_path:
-            clip_length_ms = 00#사운드 길이
-            add_collision_sounds_based_on_type(collision_times, collision_sound_path, output_audio, audio_type, clip_length_ms, video_duration*1000)
+            add_collision_sounds_based_on_type(adjusted_collision_times, collision_sound_path, output_audio, audio_type, clip_length_ms, video_duration * 1000)
             print(f"Audio file created: {output_audio}")
         else:
             print("No audio file found in the specified folder.")

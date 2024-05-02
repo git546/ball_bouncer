@@ -14,11 +14,31 @@ from game_configurations import colors
 
 ffmpeg_path = r'C:\ffmpeg-2024-04-10-git-0e4dfa4709-full_build\bin'  # 여기서 경로는 실제 ffmpeg 설치 경로로 변경해야 합니다.
 os.environ['PATH'] += os.pathsep + ffmpeg_path
+os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 class GimmickStrategy:
     def apply(self, ball, border, game):
         pass
 
+class EchoGimmick(GimmickStrategy):
+    def __init__(self, echo_lifetime=200):
+        self.echo_lifetime = echo_lifetime
+        self.echoes = []
+
+    def apply(self, ball, border, game):
+        self.echoes.append((ball.position.copy(), self.echo_lifetime))
+        new_echoes = []
+        for position, lifetime in self.echoes:
+            if lifetime > 0:
+                new_echoes.append((position, lifetime - 1))
+        self.echoes = new_echoes
+
+    def draw(self, ball, border, game):
+        for position, lifetime in self.echoes:
+            alpha = int(255 * (lifetime / self.echo_lifetime))
+            echo_color = ball.color + (alpha,)
+            pygame.draw.circle(game, echo_color, (int(position.x), int(position.y)), ball.radius)
+            
 class ColorSwapGimmick(GimmickStrategy):
     def apply(self, ball, border, game):
         ball_color = ball.color
@@ -283,7 +303,7 @@ class Game:
         
         # 랜덤으로 유형 선택
         selected_type_key = random.choice(list(configurations.keys()))
-        #selected_type_key = 'color_tracing' #임의로 설정하는 테스트용 명령
+        selected_type_key = 'color_tracing' #임의로 설정하는 테스트용 명령
         selected_type = configurations[selected_type_key]
         
         # Border 객체 초기화
@@ -397,7 +417,7 @@ class Game:
             
             pygame.display.flip()
             
-            if self.ball.get_radius()>1000:
+            if self.ball.get_radius()>10000:
                 break
             
             clock.tick(120)
