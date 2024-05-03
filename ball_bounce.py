@@ -111,9 +111,31 @@ class BorderToggleGimmick(GimmickStrategy):#테두리 만드는 기믹
     def apply(self, ball, border, game):
         ball.show_border = not ball.show_border  # 테두리 표시 여부를 토글
         
-class Tracer_Gimmick(GimmickStrategy):#트레이서를 만드는 기믹
+class Tracer_Gimmick(GimmickStrategy):
+    def __init__(self, trace_length=20):
+        self.traces = []
+        self.trace_length = trace_length  # 흔적의 최대 길이
+
     def apply(self, ball, border, game):
-        border.is_inner = False  # 더 이상 공 내부를 갱신하지 않도록 토글
+        # 흔적 목록이 최대 길이를 초과하면 가장 오래된 흔적을 제거
+        if len(self.traces) >= self.trace_length:
+            self.traces.pop(0)
+        # 공의 현재 위치, 색상, 반지름을 흔적으로 저장
+        self.traces.append({
+            'position': ball.position.copy(),
+            'color': ball.color,
+            'radius': ball.radius  # 공의 현재 반지름을 흔적의 반지름으로 사용
+        })
+
+    def draw(self, game):
+        # 흔적을 반복하여 그리기
+        for trace in self.traces:
+            # 각 흔적의 투명도를 조정 (시간에 따라 서서히 페이드아웃)
+            alpha = int(255 * (self.traces.index(trace) + 1) / len(self.traces))
+            trace_color = (trace['color'][0], trace['color'][1], trace['color'][2], alpha)  # 투명도 추가
+            pygame.gfxdraw.filled_circle(game.screen, int(trace['position'].x), int(trace['position'].y), trace['radius'], trace_color)
+            pygame.gfxdraw.aacircle(game.screen, int(trace['position'].x), int(trace['position'].y), trace['radius'], trace_color)
+
 
 
 class ConnectGimmick(GimmickStrategy):

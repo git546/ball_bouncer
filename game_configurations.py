@@ -47,7 +47,7 @@ configurations = {
             },
             'on_move': {
                 'GravityGimmick': 0,
-                'TracerMakeGimmick': 0,
+                'TracerMakeGimmick': 1,
                 'BallBorderFadeGimmick' : 1,
                 'EchoGimmick' : 1,
                 
