@@ -32,13 +32,14 @@ configurations = {
             'color': colors['black'],  # 랜덤 색상
             'growth': 1.1,  # 성장률
             'energy_loss': 1.01,  # 에너지 손실율
-            'gravity': (0, random.choice([0, random.uniform(0, 1)])),
+            'gravity': (0,1),
+            #'gravity': (0, random.choice([0, random.uniform(0, 1)])),
         },
         
         'gimmick': {
             'on_init' : {
                 'BorderToggleGimmick' : 1,
-                'Tracer_Gimmick' : 0,
+                'Tracer_Gimmick' : 1,
                 },
             'on_collision': {
                 'ColorSwapGimmick': 0,
@@ -47,9 +48,10 @@ configurations = {
             },
             'on_move': {
                 'GravityGimmick': 0,
-                'TracerMakeGimmick': 1,
-                'BallBorderFadeGimmick' : 1,
-                'EchoGimmick' : 1,
+                'Tracer_Gimmick': 0,
+                'BallBorderFadeGimmick' : 0,
+                'BallFadeGimmick' : 1,
+                'PermanentTracerGimmick' : 1,
                 
             }
         }

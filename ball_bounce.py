@@ -114,28 +114,48 @@ class BorderToggleGimmick(GimmickStrategy):#테두리 만드는 기믹
 class Tracer_Gimmick(GimmickStrategy):
     def __init__(self, trace_length=20):
         self.traces = []
-        self.trace_length = trace_length  # 흔적의 최대 길이
+        self.trace_length = trace_length
 
     def apply(self, ball, border, game):
-        # 흔적 목록이 최대 길이를 초과하면 가장 오래된 흔적을 제거
         if len(self.traces) >= self.trace_length:
             self.traces.pop(0)
-        # 공의 현재 위치, 색상, 반지름을 흔적으로 저장
         self.traces.append({
             'position': ball.position.copy(),
             'color': ball.color,
-            'radius': ball.radius  # 공의 현재 반지름을 흔적의 반지름으로 사용
+            'radius': ball.radius
         })
-
+        self.draw(game)
+        
     def draw(self, game):
-        # 흔적을 반복하여 그리기
         for trace in self.traces:
-            # 각 흔적의 투명도를 조정 (시간에 따라 서서히 페이드아웃)
             alpha = int(255 * (self.traces.index(trace) + 1) / len(self.traces))
-            trace_color = (trace['color'][0], trace['color'][1], trace['color'][2], alpha)  # 투명도 추가
-            pygame.gfxdraw.filled_circle(game.screen, int(trace['position'].x), int(trace['position'].y), trace['radius'], trace_color)
-            pygame.gfxdraw.aacircle(game.screen, int(trace['position'].x), int(trace['position'].y), trace['radius'], trace_color)
+            trace_surface = pygame.Surface((game.width, game.height), pygame.SRCALPHA)
+            trace_color = trace['color'] + (alpha,)
+            pygame.gfxdraw.filled_circle(trace_surface, int(trace['position'].x), int(trace['position'].y), trace['radius'], trace_color)
+            pygame.gfxdraw.aacircle(trace_surface, int(trace['position'].x), int(trace['position'].y), trace['radius'], trace_color)
+            game.screen.blit(trace_surface, (0, 0))
 
+class PermanentTracerGimmick(GimmickStrategy):
+    def __init__(self):
+        self.traces = []
+
+    def apply(self, ball, border, game):
+        # 공의 현재 위치를 복사하여 흔적 목록에 추가
+        self.traces.append({
+            'position': ball.position.copy(),
+            'color': ball.color,
+            'radius': ball.radius,
+            'border': border.color,
+        })
+        self.draw(game.screen)
+
+    def draw(self, screen):
+        for trace in self.traces:
+            trace_color = trace['color'] + (255,)  # 완전 불투명
+            trace_border_color = trace['border'] + (255,)
+            pygame.gfxdraw.filled_circle(screen, int(trace['position'].x), int(trace['position'].y), trace['radius'] + 2, trace_border_color)
+            pygame.gfxdraw.filled_circle(screen, int(trace['position'].x), int(trace['position'].y), trace['radius'], trace_color)
+            pygame.gfxdraw.aacircle(screen, int(trace['position'].x), int(trace['position'].y), trace['radius'], trace_color)
 
 
 class ConnectGimmick(GimmickStrategy):
@@ -181,7 +201,7 @@ class Ball:
         self.energy_loss = energy_loss
         self.gravity = gravity
         self.show_border = False  # 테두리 표시 여부를 저장하는 변수
-        self.border_color = colors['red']
+        self.border_color = colors['white']
 
     # Speed setter
     def set_speed(self, value):
@@ -406,11 +426,11 @@ class Game:
                     
             if self.border.is_inner:
                 self.screen.fill(self._background_color)
-                
+            
             self.border.draw(self.screen)
-            self.ball.draw(self.screen)
-                
-            self.ball.move()
+            
+            pygame.display.flip()
+            
             
             if self.ball.bounce(self.border):
                 for gimmick in self.gimmicks_on_move:
@@ -430,6 +450,10 @@ class Game:
                 gimmick.apply(self.ball, self.border, self)
             self.gimmicks_on_init = [] # 이후 이 리스트를 비워서 다시 적용되지 않도록 함
             
+            
+            self.ball.draw(self.screen)
+            self.ball.move()
+            
             # Capture the frame
             frame = np.array(pygame.surfarray.array3d(self.screen))
             frame = cv2.transpose(frame)
@@ -442,7 +466,7 @@ class Game:
             if self.ball.get_radius()>10000:
                 break
             
-            clock.tick(120)
+            clock.tick(60)
             
         self.video.release()    
         pygame.quit()
