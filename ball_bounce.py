@@ -41,12 +41,16 @@ class EchoGimmick(GimmickStrategy):
             
 class ColorSwapGimmick(GimmickStrategy):
     def apply(self, ball, border, game):
+        bg_color = game._background_color
         ball_color = ball.color
         border_inner_color = border.inner_color
+        border_outer_color = border.outer_color
+        
+        game._background_color = border_outer_color
+        border.outer_color=border_inner_color
+        border.inner_color=border_outer_color
         ball.set_color(border_inner_color)
-        border.outer_color = border.inner_color
-        game.swap_border_and_background_colors()  # 배경색과 보더색 교환 메서드 호출
-        border.inner_color = ball_color
+        
 
 def lerp_color(start_color, end_color, t):
     """
@@ -145,15 +149,16 @@ class PermanentTracerGimmick(GimmickStrategy):
             'position': ball.position.copy(),
             'color': ball.color,
             'radius': ball.radius,
-            'border': border.color,
+            'border': ball.border_color,
         })
-        self.draw(game.screen)
+        self.draw(game.screen, ball)
 
-    def draw(self, screen):
+    def draw(self, screen, ball):
         for trace in self.traces:
             trace_color = trace['color'] + (255,)  # 완전 불투명
             trace_border_color = trace['border'] + (255,)
-            pygame.gfxdraw.filled_circle(screen, int(trace['position'].x), int(trace['position'].y), trace['radius'] + 2, trace_border_color)
+            if ball.show_border : 
+                pygame.gfxdraw.filled_circle(screen, int(trace['position'].x), int(trace['position'].y), trace['radius'] + 2, trace_border_color)
             pygame.gfxdraw.filled_circle(screen, int(trace['position'].x), int(trace['position'].y), trace['radius'], trace_color)
             pygame.gfxdraw.aacircle(screen, int(trace['position'].x), int(trace['position'].y), trace['radius'], trace_color)
 
@@ -278,7 +283,7 @@ class Border:
         self.thickness = thickness
         self.inner_color = inner_color  # 내부 색상 추가
         self.outer_color = outer_color  # 외부 색상 추가
-        self.is_inner = True
+        
     @property
     def center(self):
         return self._center
@@ -321,7 +326,6 @@ class Border:
             print("Each channel in the color must be between 0 and 255.")
 
     def draw(self, screen):
-        if self.is_inner:
             # 외부 원 그리기
             pygame.draw.circle(screen, self.outer_color, self.center, self.radius + self.thickness)
             # 내부 원 그리기
@@ -332,21 +336,19 @@ class Game:
         #프로그램 초시화, pygame과 사운드 초기화
         pygame.init()
         pygame.mixer.init()
-
-        #화면 크기 초기화 및 창 이름 설정
-        self.width, self.height = 1080, 1920
-        self.screen = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption('Bouncing Ball Simulation with Classes')
-        
-        self.black = (0, 0, 0)
-        self.white = (255, 255, 255)
-        
-        self._background_color = self.black
         
         # 랜덤으로 유형 선택
         selected_type_key = random.choice(list(configurations.keys()))
-        selected_type_key = 'color_tracing' #임의로 설정하는 테스트용 명령
+        selected_type_key = 'mono_swap' #임의로 설정하는 테스트용 명령
         selected_type = configurations[selected_type_key]
+        
+        # Game setting 초기화
+        game_settings = selected_type['Game_setting']
+        self.width = game_settings['width']
+        self.height = game_settings['height']
+        self._background_color = game_settings['bg_color']
+        self.screen = pygame.display.set_mode((self.width, self.height))
+        pygame.display.set_caption('Bouncing Ball Simulation with Classes')
         
         # Border 객체 초기화
         border_config = selected_type['border']
@@ -424,8 +426,7 @@ class Game:
                 if event.type == pygame.QUIT:
                     running = False
                     
-            if self.border.is_inner:
-                self.screen.fill(self._background_color)
+            self.screen.fill(self._background_color)
             
             self.border.draw(self.screen)
             
