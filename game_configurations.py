@@ -6,23 +6,32 @@ import math
 # 화면 및 게임 설정 상수
 GAME_WIDTH = 1080
 GAME_HEIGHT = 1920
+BG_COLOR = colors['black']
 MONO_BG_COLOR = colors['black']
 
 # Border 설정 상수
 CENTER = (550, 960)
-RADIUS = 350
+RADIUS = 500
 THICKNESS = 10
+
+#Border 색 설정
 INNER_COLOR = colors['black']  # 내부 색상
 OUTER_COLOR = colors['white']  # 외부 색상
+MONO_INNER_COLOR = colors['black']  # 내부 색상
+MONO_OUTER_COLOR = colors['white']  # 외부 색상
 
 #Ball 설정
 BALL_POSITION = (540, 960)
-BALL_SPEED = (3, 3)
+BALL_SPEED = (2, 2)
+
 BALL_RADIUS = 10
+
 BALL_COLOR = colors['black']
+MONO_BALL_COLOR = colors['black']
+
 BALL_GROWTH = 1.1
 BALL_ENERGY_LOSS = 1.01
-BALL_GRAVITY = (0, 1)
+BALL_GRAVITY = (0, 0.2)
 
 
 #위치 초기화
@@ -31,6 +40,7 @@ def random_position_in_circle(center, radius):
     distance = random.uniform(0, radius)  # 원의 중심부터 반지름까지의 랜덤 거리
     x = center[0] + distance * math.cos(angle)
     y = center[1] + distance * math.sin(angle)
+    
     return (int(x), int(y))
 
 #---------------------추가적 초기화--------------------------------
@@ -41,20 +51,20 @@ def Mono_Setting():
     
     global MONO_BG_COLOR
     MONO_BG_COLOR = random.choice(color_options)
-    global OUTER_COLOR, INNER_COLOR, BALL_COLOR
+    global OUTER_COLOR, INNER_COLOR, MONO_BALL_COLOR
     if MONO_BG_COLOR == colors['black']:
-        OUTER_COLOR = colors['white']
-        INNER_COLOR = colors['black']
+        MONO_OUTER_COLOR = colors['white']
+        MONO_INNER_COLOR = colors['black']
     
     else:
-        OUTER_COLOR = colors['black']
-        INNER_COLOR = colors['white']
+        MONO_OUTER_COLOR = colors['black']
+        MONO_INNER_COLOR = colors['white']
     
-    BALL_COLOR = MONO_BG_COLOR
+    MONO_BALL_COLOR = MONO_OUTER_COLOR
 
 
 Mono_Setting()
-BALL_POSITION = random_position_in_circle(CENTER, RADIUS-BALL_RADIUS-THICKNESS)
+BALL_POSITION = random_position_in_circle(CENTER, RADIUS-BALL_RADIUS-THICKNESS-50)
 
 
 # 유형별 설정
@@ -103,6 +113,7 @@ configurations = {
             }
         }
     },
+    
     'mono_swap': {#흑백 색깔바꿈
         'Game_setting': {
             'width': GAME_WIDTH,
@@ -114,15 +125,15 @@ configurations = {
             'center': CENTER,
             'radius': RADIUS,
             'thickness': THICKNESS,
-            'inner_color': INNER_COLOR,
-            'outer_color': OUTER_COLOR,
+            'inner_color': MONO_INNER_COLOR,
+            'outer_color': MONO_OUTER_COLOR,
         },
         
         'ball': {
             'position': BALL_POSITION,
             'speed': BALL_SPEED,
             'radius': BALL_RADIUS,
-            'color': BALL_COLOR,
+            'color': MONO_BALL_COLOR,
             'growth': BALL_GROWTH,
             'energy_loss': BALL_ENERGY_LOSS,
             'gravity': BALL_GRAVITY,
@@ -147,38 +158,41 @@ configurations = {
         }
     },
     'mono_tracing': {#흑백 채우기
+        'Game_setting': {
+            'width': GAME_WIDTH,
+            'height': GAME_HEIGHT,
+            'bg_color': MONO_BG_COLOR,
+        },
+        
         'border': {
-            'center': (540, 960),  # 고정된 중심 위치
-            'radius': 350,  # 고정된 반지름
-            'thickness': 1,  # 고정된 두께
-            'inner_color': colors['white'],  # 내부 색상
-            'outer_color': colors['black'],  # 외부 색상
+            'center': CENTER,
+            'radius': RADIUS,
+            'thickness': THICKNESS,
+            'inner_color': MONO_INNER_COLOR,
+            'outer_color': MONO_OUTER_COLOR,
         },
         
         'ball': {
-            'position': (550, 460),  # 초기 위치
-            'speed': (2, 2),  # 초기 속도
-            'radius': 10,  # 공의 반지름
-            'color': colors['black'],  # 랜덤 색상
-            'growth': 1.1,  # 성장률
-            'energy_loss': 1.01,  # 에너지 손실율
-            'gravity': (0, random.choice([0, random.uniform(0, 1)])),
+            'position': BALL_POSITION,
+            'speed': BALL_SPEED,
+            'radius': BALL_RADIUS,
+            'color': MONO_BALL_COLOR,
+            'growth': BALL_GROWTH,
+            'energy_loss': BALL_ENERGY_LOSS,
+            'gravity': BALL_GRAVITY,
         },
         
         'gimmick': {
             'on_init' : {
                 'BorderToggleGimmick' : 0,
-                'Tracer_Gimmick' : 1,
                 },
             'on_collision': {
-                'ColorSwapGimmick': 0,
                 'LineMakeGimmick': 0,
                 
             },
             'on_move': {
-                'GravityGimmick': 0,
-                'ColorFadeGimmick' : 0,
-               
+                'PermanentTracerGimmick' : 1,
+                
             }
         }
     },

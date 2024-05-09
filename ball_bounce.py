@@ -41,8 +41,7 @@ class EchoGimmick(GimmickStrategy):
             
 class ColorSwapGimmick(GimmickStrategy):
     def apply(self, ball, border, game):
-        bg_color = game._background_color
-        ball_color = ball.color
+    
         border_inner_color = border.inner_color
         border_outer_color = border.outer_color
         
