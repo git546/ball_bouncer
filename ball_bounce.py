@@ -338,7 +338,7 @@ class Game:
         
         # 랜덤으로 유형 선택
         selected_type_key = random.choice(list(configurations.keys()))
-        selected_type_key = 'mono_swap' #임의로 설정하는 테스트용 명령
+        selected_type_key = 'fade_color_tracing' #임의로 설정하는 테스트용 명령
         selected_type = configurations[selected_type_key]
         
         # Game setting 초기화
