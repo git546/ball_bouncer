@@ -36,6 +36,7 @@ BALL_GRAVITY = (0, 0.2)
 
 #복부 호동순 용 변수
 OR10 = random.choice([0,1])
+OR10_2 = random.choice([0,1])
 #위치 초기화
 def random_position_in_circle(center, radius):
     angle = random.uniform(0, 2 * math.pi)  # 0에서 360도 사이의 각도
@@ -101,16 +102,15 @@ configurations = {
         
         'gimmick': {
             'on_init' : {
-                'BorderToggleGimmick' : 0,
+                'BorderToggleGimmick' : OR10_2,
                 },
             'on_collision': {
                 'ColorSwapGimmick': 0,
-                'LineMakeGimmick': 0,
-                
+                'LineMakeGimmick': 0, 
             },
             'on_move': {
-                'BallBorderFadeGimmick' : 0,
-                'BallFadeGimmick' : 1,
+                'BallBorderFadeGimmick' : OR10_2 * random.choice([0,1]),
+                'BallFadeGimmick' : 1-OR10_2,
                 'Tracer_Gimmick' : OR10,
                 'PermanentTracerGimmick' : 1-OR10,
                 
@@ -145,19 +145,55 @@ configurations = {
         
         'gimmick': {
             'on_init' : {
-                'BorderToggleGimmick' : 0,
+                'BorderToggleGimmick' : OR10,
                 },
             'on_collision': {
                 'ColorSwapGimmick': 0,
-                'LineMakeGimmick': 0,
-                
+                'LineMakeGimmick': 1,
             },
             'on_move': {
-                'BallBorderFadeGimmick' : 0,
-                'BallFadeGimmick' : 1,
-                'Tracer_Gimmick' : OR10,
-                'PermanentTracerGimmick' : 1-OR10,
-                
+                'BallBorderFadeGimmick' : OR10,
+                'BallFadeGimmick' : 1-OR10,          
+            }
+        }
+    },
+    
+    'uni_color_connect': {
+        'Game_setting': {
+            'width': GAME_WIDTH,
+            'height': GAME_HEIGHT,
+            'bg_color': MONO_BG_COLOR,
+        },
+        
+        'border': {
+            'center': CENTER,
+            'radius': RADIUS,
+            'thickness': THICKNESS,
+            'inner_color': MONO_INNER_COLOR,
+            'outer_color': MONO_OUTER_COLOR,
+        },
+        
+        'ball': {
+            'position': BALL_POSITION,
+            'speed': BALL_SPEED,
+            'radius': BALL_RADIUS,
+            'color': MONO_BALL_COLOR,
+            'growth': BALL_GROWTH,
+            'energy_loss': BALL_ENERGY_LOSS,
+            'gravity': BALL_GRAVITY,
+        },
+        
+        'gimmick': {
+            'on_init' : {
+                'BorderToggleGimmick' : OR10,
+                },
+            'on_collision': {
+                'ColorSwapGimmick': 0,
+                'LineMakeGimmick': 1,
+            },
+            'on_move': {
+                'BallBorderFadeGimmick' : OR10,
+                'BallFadeGimmick' : 1-OR10,          
             }
         }
     },
@@ -239,7 +275,8 @@ configurations = {
                 
             },
             'on_move': {
-                'PermanentTracerGimmick' : 1,
+                'Tracer_Gimmick' : OR10,
+                'PermanentTracerGimmick' : 1-OR10,
                 
             }
         }
@@ -285,40 +322,4 @@ configurations = {
         }
     },
     
-    'line_bouncing': {#흑백 채우기
-        'border': {
-            'center': (540, 960),  # 고정된 중심 위치
-            'radius': 350,  # 고정된 반지름
-            'thickness': 10,  # 고정된 두께
-            'inner_color': colors['black'],  # 내부 색상
-            'outer_color': colors['green'],  # 외부 색상
-        },
-        
-        'ball': {
-            'position': (550, random.choice([700, 960])), # 초기 위치
-            'speed': (7, 2),  # 초기 속도
-            'radius': 10,  # 공의 반지름
-            'color': colors['green'],  # 랜덤 색상
-            'growth': 1.1,  # 성장률
-            'energy_loss': 1.01,  # 에너지 손실율
-            'gravity': (0, random.choice([0, random.uniform(0, 1)])),
-        },
-        
-        'gimmick': {
-            'on_init' : {
-                'BorderToggleGimmick' : 0,
-                'Tracer_Gimmick' : 0,
-                },
-            'on_collision': {
-                'ColorSwapGimmick': 0,
-                'LineMakeGimmick': 0,
-                'Sound_Gimmick' : 'springy-bounce-86214.mp3',
-            },
-            'on_move': {
-                'GravityGimmick': 0,
-                'ColorFadeGimmick' : 1,
-                'ConnectGimmick' : 1,
-            }
-        }
-    },
 }

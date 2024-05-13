@@ -118,6 +118,7 @@ class Tracer_Gimmick(GimmickStrategy):
     def __init__(self, trace_length=20):
         self.traces = []
         self.trace_length = trace_length
+        self.is_tracer_border = random.choice([0,1])
 
     def apply(self, ball, border, game):
         if len(self.traces) >= self.trace_length:
@@ -125,15 +126,19 @@ class Tracer_Gimmick(GimmickStrategy):
         self.traces.append({
             'position': ball.position.copy(),
             'color': ball.color,
-            'radius': ball.radius
+            'radius': ball.radius,
+            'border': ball.border_color,
         })
-        self.draw(game)
+        self.draw(game, game.screen, ball)
         
-    def draw(self, game):
+    def draw(self, game, screen, ball):
         for trace in self.traces:
             alpha = int(255 * (self.traces.index(trace) + 1) / len(self.traces))
             trace_surface = pygame.Surface((game.width, game.height), pygame.SRCALPHA)
             trace_color = trace['color'] + (alpha,)
+            trace_border_color = trace['border'] + (alpha,)
+            if ball.show_border and self.is_tracer_border : 
+                pygame.gfxdraw.filled_circle(screen, int(trace['position'].x), int(trace['position'].y), trace['radius'] + 2, trace_border_color)
             pygame.gfxdraw.filled_circle(trace_surface, int(trace['position'].x), int(trace['position'].y), trace['radius'], trace_color)
             pygame.gfxdraw.aacircle(trace_surface, int(trace['position'].x), int(trace['position'].y), trace['radius'], trace_color)
             game.screen.blit(trace_surface, (0, 0))
@@ -141,6 +146,7 @@ class Tracer_Gimmick(GimmickStrategy):
 class PermanentTracerGimmick(GimmickStrategy):
     def __init__(self):
         self.traces = []
+        self.is_tracer_border = random.choice([0,1])
 
     def apply(self, ball, border, game):
         # 공의 현재 위치를 복사하여 흔적 목록에 추가
@@ -156,7 +162,7 @@ class PermanentTracerGimmick(GimmickStrategy):
         for trace in self.traces:
             trace_color = trace['color'] + (255,)  # 완전 불투명
             trace_border_color = trace['border'] + (255,)
-            if ball.show_border : 
+            if ball.show_border and self.is_tracer_border : 
                 pygame.gfxdraw.filled_circle(screen, int(trace['position'].x), int(trace['position'].y), trace['radius'] + 2, trace_border_color)
             pygame.gfxdraw.filled_circle(screen, int(trace['position'].x), int(trace['position'].y), trace['radius'], trace_color)
             pygame.gfxdraw.aacircle(screen, int(trace['position'].x), int(trace['position'].y), trace['radius'], trace_color)
@@ -205,7 +211,7 @@ class Ball:
         self.energy_loss = energy_loss
         self.gravity = gravity
         self.show_border = False  # 테두리 표시 여부를 저장하는 변수
-        self.border_color = colors['white']
+        self.border_color = random.choice([colors['white'], colors['black']])
 
     # Speed setter
     def set_speed(self, value):
