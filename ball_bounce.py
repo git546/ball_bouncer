@@ -174,16 +174,23 @@ class ConnectGimmick(GimmickStrategy):
 
     def apply(self, ball, border, game):
         for point in self.collision_point_list:
-            pygame.draw.line(game.screen, ball.color, (int(point.x), int(point.y)), ball.position, 2)
+            pygame.draw.line(game.screen, ball.color, (int(point.x), int(point.y)), (int(ball.position.x), int(ball.position.y)), 2)
 
     def add(self, ball, border, game):
         direction = ball.position - border.center
         distance = direction.length()
+
+        if distance == 0:
+            # Avoid division by zero if the distance is zero
+            return
+
         normal = direction.normalize()
         overlap = distance - border.radius
-        collision_point = ball.position - overlap * normal  # 충돌 지점 계산
+        collision_point = ball.position - overlap * normal
+        
         if collision_point:
             self.collision_point_list.append(collision_point)
+
 
 class CollisionRecorderGimmick:
     def __init__(self):
@@ -344,7 +351,7 @@ class Game:
         
         # 랜덤으로 유형 선택
         selected_type_key = random.choice(list(configurations.keys()))
-        selected_type_key = 'fade_color_tracing' #임의로 설정하는 테스트용 명령
+        #selected_type_key = 'uni_color_connect' #임의로 설정하는 테스트용 명령
         selected_type = configurations[selected_type_key]
         
         # Game setting 초기화
@@ -470,6 +477,8 @@ class Game:
             pygame.display.flip()
             
             if self.ball.get_radius()>10000:
+                break
+            elif self.ball.get_radius() < 5:
                 break
             
             clock.tick(60)

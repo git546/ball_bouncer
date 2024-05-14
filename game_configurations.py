@@ -33,6 +33,10 @@ BALL_GROWTH = 1.1
 BALL_ENERGY_LOSS = 1.01
 BALL_GRAVITY = (0, 0.2)
 
+#UNI 옵션 용
+UNI_COLOR = random.choice(list(colors.values()))
+UNI_BG_COLOR = colors['black']
+UNI_INNER_COLOR = colors['black']
 
 #복부 호동순 용 변수
 OR10 = random.choice([0,1])
@@ -68,10 +72,28 @@ def Mono_Setting():
     
     return mono_bg_color, mono_outer_color, mono_inner_color, mono_ball_color
 
+#UNI 컬러 결정
+def adjust_color_based_on_brightness(UNI_COLOR):
+    #평균 밝기 계산
+    brightness = sum(UNI_COLOR) / 3
+    
+    # 밝기에 따라 배경색과 내부 색상 설정
+    if brightness < 128:  # 흑색에 가까운 경우
+        UNI_BG = colors['white']  # 백색
+        UNI_INNER = colors['white']  # 백색
+    else:  # 백색에 가까운 경우
+        UNI_BG = colors['black']  # 흑색
+        UNI_INNER = colors['black']  # 흑색
+    
+    return UNI_BG, UNI_INNER
 
+UNI_BG_COLOR, UNI_INNER_COLOR = adjust_color_based_on_brightness(UNI_COLOR)
 MONO_BG_COLOR, MONO_OUTER_COLOR, MONO_INNER_COLOR, MONO_BALL_COLOR = Mono_Setting()
 BALL_POSITION = random_position_in_circle(CENTER, RADIUS-BALL_RADIUS-THICKNESS-50)
 
+# Ball 설정 - 초기 크기가 더 크고 점차 작아지는 설정
+BALL_RADIUS_INITIAL_SHRINK = RADIUS  # 초기 반지름을 더 크게 설정
+BALL_GROWTH_SHRINK = 0.9         # 성장률을 0.9로 설정하여 점차 작아짐
 
 # 유형별 설정
 configurations = {
@@ -158,13 +180,12 @@ configurations = {
         }
     },
     
-    'uni_color_connect': {
+    'fade_color_shrink': {
         'Game_setting': {
             'width': GAME_WIDTH,
             'height': GAME_HEIGHT,
             'bg_color': MONO_BG_COLOR,
         },
-        
         'border': {
             'center': CENTER,
             'radius': RADIUS,
@@ -172,12 +193,49 @@ configurations = {
             'inner_color': MONO_INNER_COLOR,
             'outer_color': MONO_OUTER_COLOR,
         },
+        'ball': {
+            'position': BALL_POSITION,
+            'speed': BALL_SPEED,
+            'radius': BALL_RADIUS_INITIAL_SHRINK,
+            'color': MONO_BALL_COLOR,
+            'growth': BALL_GROWTH_SHRINK,
+            'energy_loss': BALL_ENERGY_LOSS,
+            'gravity': BALL_GRAVITY,
+        },
+        'gimmick': {
+            'on_init': {
+                'BorderToggleGimmick': OR10,
+            },
+            'on_collision': {
+            },
+            'on_move': {
+                'ConnectGimmick': 1,
+                'BallFadeGimmick' : 1-OR10,
+                'BallBorderFadeGimmick' : OR10,
+            }
+        }
+    },
+    
+    'uni_color_connect': {
+        'Game_setting': {
+            'width': GAME_WIDTH,
+            'height': GAME_HEIGHT,
+            'bg_color': UNI_BG_COLOR,
+        },
+        
+        'border': {
+            'center': CENTER,
+            'radius': RADIUS,
+            'thickness': THICKNESS,
+            'inner_color': UNI_INNER_COLOR,
+            'outer_color': UNI_COLOR,  
+        },
         
         'ball': {
             'position': BALL_POSITION,
             'speed': BALL_SPEED,
             'radius': BALL_RADIUS,
-            'color': MONO_BALL_COLOR,
+            'color': UNI_COLOR,
             'growth': BALL_GROWTH,
             'energy_loss': BALL_ENERGY_LOSS,
             'gravity': BALL_GRAVITY,
@@ -189,12 +247,43 @@ configurations = {
                 },
             'on_collision': {
                 'ColorSwapGimmick': 0,
-                'LineMakeGimmick': 1,
+                'ConnectGimmick': 1,
             },
-            'on_move': {
-                'BallBorderFadeGimmick' : OR10,
-                'BallFadeGimmick' : 1-OR10,          
+            'on_move': {       
+                'ConnectGimmick': 1,
             }
+        }
+    },
+    
+    'uni_color_connect_shrink': {
+        'Game_setting': {
+            'width': GAME_WIDTH,
+            'height': GAME_HEIGHT,
+            'bg_color': UNI_BG_COLOR,
+        },
+        
+        'border': {
+            'center': CENTER,
+            'radius': RADIUS,
+            'thickness': THICKNESS,
+            'inner_color': UNI_INNER_COLOR,
+            'outer_color': UNI_COLOR,
+        },
+        
+        'ball': {
+            'position': BALL_POSITION,
+            'speed': BALL_SPEED,
+            'radius': BALL_RADIUS_INITIAL_SHRINK,  # 초기 크기가 더 큰 반지름
+            'color': UNI_COLOR,
+            'growth': BALL_GROWTH_SHRINK,  # 성장률을 0.9로 설정
+            'energy_loss': BALL_ENERGY_LOSS,
+            'gravity': BALL_GRAVITY,
+        },
+        
+        'gimmick': {
+            'on_init' : {'BorderToggleGimmick' : OR10},
+            'on_collision': {'ConnectGimmick': 1, 'ColorSwapGimmick': 0},
+            'on_move': {'ConnectGimmick': 1}
         }
     },
     
@@ -317,9 +406,43 @@ configurations = {
             },
             'on_move': {
                 'PermanentTracerGimmick' : 0,
-                
             }
         }
     },
     
-}
+    'mono_shrink': {
+        'Game_setting': {
+            'width': GAME_WIDTH,
+            'height': GAME_HEIGHT,
+            'bg_color': MONO_BG_COLOR,
+        },
+        'border': {
+            'center': CENTER,
+            'radius': RADIUS,
+            'thickness': THICKNESS,
+            'inner_color': MONO_INNER_COLOR,
+            'outer_color': MONO_OUTER_COLOR,
+        },
+        'ball': {
+            'position': BALL_POSITION,
+            'speed': BALL_SPEED,
+            'radius': BALL_RADIUS_INITIAL_SHRINK,
+            'color': MONO_BALL_COLOR,
+            'growth': BALL_GROWTH_SHRINK,
+            'energy_loss': BALL_ENERGY_LOSS,
+            'gravity': BALL_GRAVITY,
+        },
+        'gimmick': {
+            'on_init': {
+                'BorderToggleGimmick': 0,
+            },
+            'on_collision': {
+                'ColorSwapGimmick': OR10,
+            },
+            'on_move': {
+                'ConnectGimmick': 1-OR10,
+            }
+        }
+    },
+    
+    }
