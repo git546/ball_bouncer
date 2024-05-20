@@ -4,6 +4,7 @@ import random
 import subprocess
 from ball_bounce import Game
 from sound_ctl import add_collision_sounds_based_on_type
+from game_configurations import colors
 
 # Constants for paths and filenames can be set here or read from environment/config
 FFMPEG_PATH = os.environ.get('FFMPEG_PATH', r'C:\ffmpeg-2024-04-10-git-0e4dfa4709-full_build\bin')
@@ -42,6 +43,35 @@ def adjust_collision_times(collision_times, cut_time):
     adjusted_times = [time - cut_time for time in collision_times if time > cut_time]
     return adjusted_times
 
+def generate_video_title(game, audio_type):
+    # 게임 설정에서 볼과 테두리의 색상을 확인
+    ball_color_name = ''
+    
+    for color_name, color_value in colors.items():
+        if color_value == game.ball.color:
+            ball_color_name = color_name
+            break
+    
+    if game.rainbow_checker:
+        ball_color_name = 'rainbow'
+    
+    # 볼의 색상을 제목에 포함
+    title_parts = [f"This {ball_color_name.capitalize()} Ball"]
+
+    # 설정에 따라 "Getting Bigger" 또는 "Getting Smaller" 추가
+    if game.ball.growth > 1:
+        title_parts.append("Getting Bigger")
+    elif game.ball.growth < 1:
+        title_parts.append("Getting Smaller")
+
+    # 사운드 설정에 따라 제목 변경
+    title_parts.append("with")
+    title_parts.append(audio_type)
+
+
+    # 제목 부분을 연결
+    return " ".join(title_parts)
+
 def run_game_and_create_audio(video_filename='game_video.avi', output_audio='game_audio.mp3',
                               audio_type='music', clip_length_ms=1000, target_duration=75):
     while True:
@@ -57,19 +87,13 @@ def run_game_and_create_audio(video_filename='game_video.avi', output_audio='gam
             print("Video is too long, restarting...")
             continue
         
-        # Calculate the amount to trim from the start of the video
-        cut_time = max(0, video_duration - 60)
-        
-        if video_duration > 60:
-            print("Trimming video to keep the last 60 seconds...")
-            trim_video(video_filename, video_filename, video_duration - 60, video_duration)
-            video_duration = 60  # Update video duration after trimming
         break
 
     collision_times = getattr(game, 'collision_recorder', None).get_collision_times() if game else []
+    
     if collision_times:
         print(f"Collision times recorded: {collision_times}")
-        adjusted_collision_times = adjust_collision_times(collision_times, cut_time * 1000)
+        adjusted_collision_times = adjust_collision_times(collision_times, max(0, video_duration - 60) * 1000)
         print(f"Adjusted collision times: {adjusted_collision_times}")
         
         folder = 'music' if audio_type == 'music' else 'effect'
@@ -81,20 +105,24 @@ def run_game_and_create_audio(video_filename='game_video.avi', output_audio='gam
             print("No audio file found in the specified folder.")
     else:
         print("No collision times recorded.")
+        
+    Video_Title = generate_video_title(game, audio_type)
+    return Video_Title, video_duration
 
-def merge_audio_video(audio_filename='game_audio.mp3', video_filename='game_video.avi', output_filename='final_output.mp4'):
+def merge_audio_video(audio_filename='game_audio.mp3', video_filename='game_video.avi', output_filename='final_output.mp4', video_duration=0):
+    intermediate_output = 'intermediate_output.mp4'
     command = [
         'ffmpeg',
         '-y',
         '-i', video_filename,
         '-i', audio_filename,
         '-c:v', 'libx264',  # H.264 코덱 사용
-        '-crf', '0',  # 품질을 18로 설정, 0이 최고 (무손실)이고 51이 최저 품질
+        '-crf', '0',  # 품질을 0으로 설정 (무손실)
         '-preset', 'slow',  # 인코딩 속도와 압축 효율 사이의 균형 설정, 더 좋은 압축을 위해 slow 사용
         '-c:a', 'aac',  # 오디오 코덱 AAC
         '-strict', 'experimental',
         '-b:a', '192k',  # 오디오 비트레이트를 192 kbps로 설정
-        output_filename
+        intermediate_output
     ]
     try:
         process = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -106,9 +134,14 @@ def merge_audio_video(audio_filename='game_audio.mp3', video_filename='game_vide
         print("Output:", e.output)
         print("Error output:", e.stderr)
 
-def main():
-    run_game_and_create_audio()
-    merge_audio_video()
+    # 이제 최종 출력을 트리밍합니다
+    if video_duration > 60:
+        print("Trimming final output to keep the last 60 seconds...")
+        trim_video(intermediate_output, output_filename, video_duration)
 
+def main():
+    Video_Title = run_game_and_create_audio()
+    merge_audio_video()
+    print(Video_Title)
 if __name__ == "__main__":
     main()

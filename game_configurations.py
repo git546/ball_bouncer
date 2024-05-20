@@ -93,7 +93,8 @@ BALL_POSITION = random_position_in_circle(CENTER, RADIUS-BALL_RADIUS-THICKNESS-5
 
 # Ball 설정 - 초기 크기가 더 크고 점차 작아지는 설정
 BALL_RADIUS_INITIAL_SHRINK = RADIUS  # 초기 반지름을 더 크게 설정
-BALL_GROWTH_SHRINK = 0.9         # 성장률을 0.9로 설정하여 점차 작아짐
+BALL_GROWTH_SHRINK = 0.97       # 성장률을 0.9로 설정하여 점차 작아짐
+SHRINK_BALL_POSITION = (540, 960)
 
 # 유형별 설정
 configurations = {
@@ -194,7 +195,7 @@ configurations = {
             'outer_color': MONO_OUTER_COLOR,
         },
         'ball': {
-            'position': BALL_POSITION,
+            'position': SHRINK_BALL_POSITION,
             'speed': BALL_SPEED,
             'radius': BALL_RADIUS_INITIAL_SHRINK,
             'color': MONO_BALL_COLOR,
@@ -271,7 +272,7 @@ configurations = {
         },
         
         'ball': {
-            'position': BALL_POSITION,
+            'position': SHRINK_BALL_POSITION,
             'speed': BALL_SPEED,
             'radius': BALL_RADIUS_INITIAL_SHRINK,  # 초기 크기가 더 큰 반지름
             'color': UNI_COLOR,
@@ -424,7 +425,7 @@ configurations = {
             'outer_color': MONO_OUTER_COLOR,
         },
         'ball': {
-            'position': BALL_POSITION,
+            'position': SHRINK_BALL_POSITION,
             'speed': BALL_SPEED,
             'radius': BALL_RADIUS_INITIAL_SHRINK,
             'color': MONO_BALL_COLOR,

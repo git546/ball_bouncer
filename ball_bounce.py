@@ -354,6 +354,8 @@ class Game:
         #selected_type_key = 'uni_color_connect' #임의로 설정하는 테스트용 명령
         selected_type = configurations[selected_type_key]
         
+        self.rainbow_checker = 0
+        
         # Game setting 초기화
         game_settings = selected_type['Game_setting']
         self.width = game_settings['width']
@@ -420,6 +422,8 @@ class Game:
                 gimmick_class = globals().get(gimmick_name)
                 if gimmick_class:
                     self.gimmicks_on_move.append(gimmick_class())
+                    if gimmick_name == 'BallFadeGimmick':
+                        rainbow_checker = 1
         
         self.collision_recorder = CollisionRecorderGimmick()
         self.gimmicks_on_collision.append(self.collision_recorder)
