@@ -110,7 +110,6 @@ def run_game_and_create_audio(video_filename='game_video.avi', output_audio='gam
     return Video_Title, video_duration
 
 def merge_audio_video(audio_filename='game_audio.mp3', video_filename='game_video.avi', output_filename='final_output.mp4', video_duration=0):
-    intermediate_output = 'intermediate_output.mp4'
     command = [
         'ffmpeg',
         '-y',
@@ -122,7 +121,7 @@ def merge_audio_video(audio_filename='game_audio.mp3', video_filename='game_vide
         '-c:a', 'aac',  # 오디오 코덱 AAC
         '-strict', 'experimental',
         '-b:a', '192k',  # 오디오 비트레이트를 192 kbps로 설정
-        intermediate_output
+        output_filename
     ]
     try:
         process = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -134,14 +133,16 @@ def merge_audio_video(audio_filename='game_audio.mp3', video_filename='game_vide
         print("Output:", e.output)
         print("Error output:", e.stderr)
 
-    # 이제 최종 출력을 트리밍합니다
+    # 최종 출력 트리밍 (최종 결과물의 길이가 60초를 초과하는 경우에만)
     if video_duration > 60:
         print("Trimming final output to keep the last 60 seconds...")
-        trim_video(intermediate_output, output_filename, video_duration)
+        trim_video(output_filename, output_filename, video_duration)
+
 
 def main():
-    Video_Title = run_game_and_create_audio()
-    merge_audio_video()
+    Video_Title, video_duration = run_game_and_create_audio()
+    merge_audio_video(video_filename='game_video.avi', audio_filename='game_audio.mp3', output_filename='final_output.mp4', video_duration=video_duration)
     print(Video_Title)
+    
 if __name__ == "__main__":
     main()
