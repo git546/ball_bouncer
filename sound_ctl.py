@@ -1,15 +1,18 @@
+import numpy as np
+import librosa
 from pydub import AudioSegment
-import os
 
-# ffmpeg 환경 설정
-ffmpeg_path = r'C:\ffmpeg-2024-04-10-git-0e4dfa4709-full_build\bin'  # 실제 ffmpeg 설치 경로로 변경하세요.
-os.environ['PATH'] += os.pathsep + ffmpeg_path
-
-# 예제 데이터 설정
-collision = [1000, 2500, 5000, 10000]  # 밀리초 단위로 충돌 시간을 지정합니다.
-collision_sound_path = "music/test.mp3"  # 실제 존재하는 파일 경로로 변경해야 합니다.
-output_path = "output_audio.mp3"  # 출력 파일 경로
-audio_type = "music"  # 오디오 타입을 'music'으로 설정
+def pitch_shift(audio_segment, n_steps):
+    samples = np.array(audio_segment.get_array_of_samples())
+    samples = samples.astype(np.float32)
+    y_shifted = librosa.effects.pitch_shift(samples, sr=audio_segment.frame_rate, n_steps=n_steps)
+    shifted_audio_segment = AudioSegment(
+        y_shifted.tobytes(),
+        frame_rate=audio_segment.frame_rate,
+        sample_width=audio_segment.sample_width,
+        channels=audio_segment.channels
+    )
+    return shifted_audio_segment
 
 def add_collision_sounds_based_on_type(collision_times, collision_sound_path, output_path, audio_type, clip_length_ms, video_duration):
     """
@@ -25,11 +28,18 @@ def add_collision_sounds_based_on_type(collision_times, collision_sound_path, ou
     Returns:
     - None
     """
-    # 충돌 소리 파일 로드
-    collision_sound = AudioSegment.from_file(collision_sound_path).apply_gain(0)
+    try:
+        # 충돌 소리 파일 로드
+        collision_sound = AudioSegment.from_file(collision_sound_path).apply_gain(0)
+    except FileNotFoundError:
+        print(f"File not found: {collision_sound_path}")
+        return
+    except Exception as e:
+        print(f"An error occurred while loading the collision sound: {e}")
+        return
 
     # 1분 길이의 무음 오디오 생성
-    base_audio = AudioSegment.silent(duration=video_duration)  # 약 1분 = 59000 밀리초
+    base_audio = AudioSegment.silent(duration=video_duration)  # 비디오 길이에 맞춤
 
     if audio_type == 'music':
         # 충돌 시간 병합을 위한 처리
@@ -37,7 +47,6 @@ def add_collision_sounds_based_on_type(collision_times, collision_sound_path, ou
         merged_times = []
         current_start = collision_times[0]
         current_end = current_start + clip_length_ms
-
 
         for time in collision_times[1:]:
             if time <= current_end:  # 현재 시간이 이전 시간과 겹치면 병합
@@ -52,18 +61,31 @@ def add_collision_sounds_based_on_type(collision_times, collision_sound_path, ou
         offset = 0  # 오디오 클립에서 시작점을 계산하기 위한 오프셋
         for start, end in merged_times:
             duration = end - start
-            clip = collision_sound[offset:offset + duration]
+            clip = collision_sound[:duration]
+            # 피치 변환 (높이 변경)
+            n_steps = np.random.randint(-2, 3)  # -2에서 +2 사이의 무작위 피치 이동
+            clip = pitch_shift(clip, n_steps)
             base_audio = base_audio.overlay(clip, position=start)
             offset = (offset + duration) % len(collision_sound)  # 다음 클립의 시작점을 업데이트
 
     elif audio_type == 'effect':
         # 각 충돌 시간에 동일한 효과음 동시 재생
         for time in collision_times:
-            base_audio = base_audio.overlay(collision_sound, position=time)
+            # 피치 변환 (높이 변경)
+            n_steps = np.random.randint(-2, 3)  # -2에서 +2 사이의 무작위 피치 이동
+            effect_clip = pitch_shift(collision_sound, n_steps)
+            base_audio = base_audio.overlay(effect_clip, position=time)
 
     # 결과 오디오 파일 저장
     base_audio.export(output_path, format="mp3")
-    
+
     return audio_type
 
-#add_collision_sounds_based_on_type(collision, collision_sound_path, output_path, audio_type, 2500, 15000)
+# 예제 데이터 설정
+collision = [1000, 2500, 5000, 10000]  # 밀리초 단위로 충돌 시간을 지정합니다.
+collision_sound_path = "music/test.mp3"  # 실제 존재하는 파일 경로로 변경해야 합니다.
+output_path = "output_audio.mp3"  # 출력 파일 경로
+audio_type = "music"  # 오디오 타입을 'music'으로 설정
+
+# 함수 호출 예제
+# add_collision_sounds_based_on_type(collision, collision_sound_path, output_path, audio_type, 2500, 15000)

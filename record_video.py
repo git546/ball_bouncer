@@ -28,6 +28,24 @@ def get_video_duration(filename):
     video.release()
     return duration
 
+def get_video_framerate(filename):
+    """ Return the frame rate of a video """
+    result = subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=r_frame_rate", "-of", "csv=p=0", filename],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT
+    )
+    framerate = result.stdout.decode('utf-8').strip()
+    num, denom = map(int, framerate.split('/'))
+    return num / denom
+
+def convert_collision_frames_to_times(collision_frames, framerate):
+    """ Convert collision frames to milliseconds with precise floating-point division """
+    collision_times = [round(frame * 1000 / framerate) for frame in collision_frames]
+    print(f"Converted collision frames to times (ms): {collision_times}")
+    return collision_times
+
+
 def trim_video(input_filename, output_filename, video_duration):
     """ Trim the video file to keep the last 60 seconds """
     start_time = max(0, video_duration - 60)  # Ensure start_time is not negative
@@ -45,7 +63,7 @@ def adjust_collision_times(collision_times, cut_time):
 
 def generate_video_title(game, audio_type):
     # 게임 설정에서 볼과 테두리의 색상을 확인
-    ball_color_name = ''
+    ball_color_name = '\b'
     
     for color_name, color_value in colors.items():
         if color_value == game.ball.color:
@@ -68,12 +86,14 @@ def generate_video_title(game, audio_type):
     title_parts.append("with")
     title_parts.append(audio_type)
 
-
     # 제목 부분을 연결
     return " ".join(title_parts)
 
 def run_game_and_create_audio(video_filename='game_video.avi', output_audio='game_audio.mp3',
-                              audio_type='music', clip_length_ms=1000, target_duration=75):
+                              clip_length_ms=1000, target_duration=75):
+    
+    audio_type = random.choice(['music', 'effect'])
+    
     while True:
         print("Starting game...")
         game = Game()
@@ -81,18 +101,20 @@ def run_game_and_create_audio(video_filename='game_video.avi', output_audio='gam
         print("Game ended.")
 
         video_duration = get_video_duration(video_filename)
+        framerate = get_video_framerate(video_filename)
         print(f"Video duration: {video_duration:.2f} seconds")
+        print(f"Video framerate: {framerate:.2f} fps")
         
         if video_duration > target_duration:
-            print("Video is too long, restarting...")
+            print("Video is too long,  restarting...")
             continue
-        
         break
 
-    collision_times = getattr(game, 'collision_recorder', None).get_collision_times() if game else []
+    collision_frames = getattr(game, 'collision_recorder', None).get_collision_frames() if game else []
     
-    if collision_times:
-        print(f"Collision times recorded: {collision_times}")
+    if collision_frames:
+        print(f"Collision frames recorded: {collision_frames}")
+        collision_times = convert_collision_frames_to_times(collision_frames, framerate)
         adjusted_collision_times = adjust_collision_times(collision_times, max(0, video_duration - 60) * 1000)
         print(f"Adjusted collision times: {adjusted_collision_times}")
         
@@ -138,11 +160,10 @@ def merge_audio_video(audio_filename='game_audio.mp3', video_filename='game_vide
         print("Trimming final output to keep the last 60 seconds...")
         trim_video(output_filename, output_filename, video_duration)
 
-
 def main():
     Video_Title, video_duration = run_game_and_create_audio()
     merge_audio_video(video_filename='game_video.avi', audio_filename='game_audio.mp3', output_filename='final_output.mp4', video_duration=video_duration)
     print(Video_Title)
-    
+
 if __name__ == "__main__":
     main()

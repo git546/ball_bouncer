@@ -65,11 +65,12 @@ def lerp_color(start_color, end_color, t):
     return int(r), int(g), int(b)
 
 class ColorFadeGimmick(GimmickStrategy):
-    def __init__(self):
+    def __init__(self):  # 보간 속도를 매개변수로 받도록 수정
         self.rainbow_colors = [colors['red'], colors['orange'], colors['yellow'],
                                colors['green'], colors['blue'], colors['indigo'], colors['violet']]
         self.current_index = 0
         self.t = 0.0  # 현재 보간 비율
+        self.speed = random.uniform(0.005, 0.095)  # 보간 속도
 
     def interpolate_color(self):
         # 현재 색상과 다음 색상 계산
@@ -80,7 +81,7 @@ class ColorFadeGimmick(GimmickStrategy):
         return interpolated_color
 
     def update_color_index(self):
-        self.t += 0.005  # 보간 속도 조절
+        self.t += self.speed  # 보간 속도에 따라 t 증가
         if self.t >= 1.0:
             self.t = 0.0
             self.current_index = (self.current_index + 1) % len(self.rainbow_colors)
@@ -194,19 +195,16 @@ class ConnectGimmick(GimmickStrategy):
 
 class CollisionRecorderGimmick:
     def __init__(self):
-        self.collision_times = []
-        self.start_time = time.time() * 1000  # 시작 시간을 밀리초로 변환
+        self.collision_frames = []
 
-    def record_collision(self):
-        current_time = time.time() * 1000  # 현재 시간을 밀리초로 변환
-        collision_time = current_time - self.start_time
-        self.collision_times.append(collision_time)
+    def record_collision(self, frame_count):
+        self.collision_frames.append(frame_count)
 
-    def get_collision_times(self):
-        return self.collision_times
+    def get_collision_frames(self):
+        return self.collision_frames
 
     def apply(self, ball, border, game):
-            self.record_collision()
+        self.record_collision(game.frame_count)
             
 class Ball:
     def __init__(self, position, speed, radius, color, growth, energy_loss, gravity):
@@ -355,6 +353,7 @@ class Game:
         selected_type = configurations[selected_type_key]
         
         self.rainbow_checker = 0
+        self.frame_count = 0  # 프레임 카운트 초기화
         
         # Game setting 초기화
         game_settings = selected_type['Game_setting']
@@ -485,6 +484,7 @@ class Game:
             elif self.ball.get_radius() < 5:
                 break
             
+            self.frame_count += 1  # 프레임 카운트 증가
             clock.tick(60)
             
         self.video.release()    
