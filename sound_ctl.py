@@ -63,7 +63,7 @@ def add_collision_sounds_based_on_type(collision_times, collision_sound_path, ou
             duration = end - start
             clip = collision_sound[:duration]
             # 피치 변환 (높이 변경)
-            n_steps = np.random.randint(-2, 3)  # -2에서 +2 사이의 무작위 피치 이동
+            n_steps = np.random.randint(0, 0)  # -2에서 +2 사이의 무작위 피치 이동
             clip = pitch_shift(clip, n_steps)
             base_audio = base_audio.overlay(clip, position=start)
             offset = (offset + duration) % len(collision_sound)  # 다음 클립의 시작점을 업데이트

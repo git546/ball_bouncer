@@ -144,6 +144,17 @@ class Tracer_Gimmick(GimmickStrategy):
             pygame.gfxdraw.aacircle(trace_surface, int(trace['position'].x), int(trace['position'].y), trace['radius'], trace_color)
             game.screen.blit(trace_surface, (0, 0))
 
+class BorderShrinkGimmick(GimmickStrategy):
+    def __init__(self, shrink_factor=0.95):
+        self.shrink_factor = shrink_factor
+
+    def apply(self, ball, border, game):
+        new_radius = border.radius * self.shrink_factor
+        if new_radius > 10:  # 최소 반경 제한
+            border.radius = new_radius
+        else:
+            border.radius = 10  # 최소 반경으로 설정
+            
 class PermanentTracerGimmick(GimmickStrategy):
     def __init__(self):
         self.traces = []

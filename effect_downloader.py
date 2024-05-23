@@ -26,46 +26,36 @@ session.mount('https://', adapter)
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
 
-def search_sounds_freesound(query, num_sounds=5):
+def search_sounds_freesound(query, page, num_sounds=5):
     sounds = []
-    page_url = SEARCH_URLS['freesound'] + query
-    while len(sounds) < num_sounds and page_url:
-        response = session.get(page_url, headers=headers)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.content, 'html.parser')
-        new_sounds = [{'title': link.find('a').text.strip(), 'url': BASE_URLS['freesound'] + link.find('a')['href']}
-                      for link in soup.find_all('div', {'class': 'sound_title'})]
-        if not new_sounds:
-            break
-        sounds.extend(new_sounds)
-        next_page = soup.find('a', {'class': 'next'})
-        page_url = BASE_URLS['freesound'] + next_page['href'] if next_page else None
-    return sounds[:num_sounds]
+    page_url = f"{SEARCH_URLS['freesound']}{query}&page={page}"
+    response = session.get(page_url, headers=headers, timeout=10)
+    response.raise_for_status()
+    soup = BeautifulSoup(response.content, 'html.parser')
+    new_sounds = [{'title': link.find('a').text.strip(), 'url': BASE_URLS['freesound'] + link.find('a')['href']}
+                  for link in soup.find_all('div', {'class': 'sound_title'})]
+    sounds.extend(new_sounds)
+    return sounds
 
-def search_sounds_soundbible(query, num_sounds=5):
+def search_sounds_soundbible(query, page, num_sounds=5):
     sounds = []
-    page_url = SEARCH_URLS['soundbible'] + query
-    while len(sounds) < num_sounds and page_url:
-        response = session.get(page_url, headers=headers)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.content, 'html.parser')
-        new_sounds = [{'title': link.find('a').text.strip(), 'url': BASE_URLS['soundbible'] + '/' + link.find('a')['href']}
-                      for link in soup.find_all('h3') if link.find('a')]
-        if not new_sounds:
-            break
-        sounds.extend(new_sounds)
-        next_page = soup.find('a', {'class': 'next'})
-        page_url = BASE_URLS['soundbible'] + next_page['href'] if next_page else None
-    return sounds[:num_sounds]
+    page_url = f"{SEARCH_URLS['soundbible']}{query}&page={page}"
+    response = session.get(page_url, headers=headers, timeout=10)
+    response.raise_for_status()
+    soup = BeautifulSoup(response.content, 'html.parser')
+    new_sounds = [{'title': link.find('a').text.strip(), 'url': BASE_URLS['soundbible'] + '/' + link.find('a')['href']}
+                  for link in soup.find_all('h3') if link.find('a')]
+    sounds.extend(new_sounds)
+    return sounds
 
 def download_sound_freesound(sound_info, download_path):
-    response = session.get(sound_info['url'], headers=headers)
+    response = session.get(sound_info['url'], headers=headers, timeout=10)
     response.raise_for_status()
     soup = BeautifulSoup(response.content, 'html.parser')
     download_link = soup.find('a', {'class': 'mp3_file'})
     if download_link:
         download_link = BASE_URLS['freesound'] + download_link['href']
-        response = session.get(download_link, headers=headers)
+        response = session.get(download_link, headers=headers, timeout=10)
         response.raise_for_status()
         with open(download_path, 'wb') as f:
             f.write(response.content)
@@ -74,7 +64,7 @@ def download_sound_freesound(sound_info, download_path):
         print(f"Download link not found for: {sound_info['url']}")
 
 def download_sound_soundbible(sound_info, download_path):
-    response = session.get(sound_info['url'], headers=headers)
+    response = session.get(sound_info['url'], headers=headers, timeout=10)
     response.raise_for_status()
     soup = BeautifulSoup(response.content, 'html.parser')
     download_link = None
@@ -84,7 +74,7 @@ def download_sound_soundbible(sound_info, download_path):
             download_link = href
             break
     if download_link:
-        response = session.get(download_link, headers=headers)
+        response = session.get(download_link, headers=headers, timeout=10)
         response.raise_for_status()
         with open(download_path, 'wb') as f:
             f.write(response.content)
@@ -107,35 +97,48 @@ def collect_sounds(keywords, output_dir='effect', num_sounds_per_keyword=5, hist
         os.makedirs(output_dir)
 
     download_history = load_download_history(history_file)
-
+    skipped_files = set()
+    
     for site in ['freesound', 'soundbible']:
         print(f"Collecting sounds from {site}...")
         for keyword in keywords:
             print(f"Searching for sounds with keyword: {keyword}")
-            if site == 'freesound':
-                sounds = search_sounds_freesound(keyword, num_sounds=num_sounds_per_keyword)
-                download_function = download_sound_freesound
-            elif site == 'soundbible':
-                sounds = search_sounds_soundbible(keyword, num_sounds=num_sounds_per_keyword)
-                download_function = download_sound_soundbible
-
+            page = 1
             downloaded_count = 0
-            for sound_info in sounds:
-                if downloaded_count >= num_sounds_per_keyword:
+            while downloaded_count < num_sounds_per_keyword:
+                if site == 'freesound':
+                    new_sounds = search_sounds_freesound(keyword, page, num_sounds=num_sounds_per_keyword)
+                elif site == 'soundbible':
+                    new_sounds = search_sounds_soundbible(keyword, page, num_sounds=num_sounds_per_keyword)
+                
+                # 새로운 소리가 없으면 루프 종료
+                if not new_sounds:
                     break
 
-                sound_name = f"{site}_{sound_info['title'].replace(' ', '_')}.mp3"
-                if sound_name in download_history:
-                    print(f"Skipping already downloaded sound: {sound_name}")
-                    continue
+                for sound_info in new_sounds:
+                    if downloaded_count >= num_sounds_per_keyword:
+                        break
 
-                print(f"Downloading sound: {sound_name}")
-                download_path = os.path.join(output_dir, sound_name)
-                download_function(sound_info, download_path)
-                download_history.append(sound_name)
-                save_download_history(history_file, download_history)
-                downloaded_count += 1
+                    sound_name = f"{site}_{sound_info['title'].replace(' ', '_')}.mp3"
+                    if sound_name in download_history:
+                        print(f"Skipping already downloaded sound: {sound_name}")
+                        if sound_name in skipped_files:
+                            print(f"Skipping same file twice, ending loop for {keyword}")
+                            downloaded_count = num_sounds_per_keyword  # 강제로 종료
+                            break
+                        skipped_files.add(sound_name)
+                        continue
+
+                    print(f"Downloading sound: {sound_name}")
+                    download_path = os.path.join(output_dir, sound_name)
+                    download_function = download_sound_freesound if site == 'freesound' else download_sound_soundbible
+                    download_function(sound_info, download_path)
+                    download_history.append(sound_name)
+                    save_download_history(history_file, download_history)
+                    downloaded_count += 1
+
+                page += 1
 
 if __name__ == "__main__":
-    keywords = ['bounce', 'collision', 'hit', 'impact', 'explosion']
+    keywords = ['bounce', 'collision', 'hit', 'impact', 'explosion','bouncy','anime','spring', 'jump', '']
     collect_sounds(keywords)

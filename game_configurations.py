@@ -141,6 +141,8 @@ configurations = {
         }
     },
     
+    
+    
     'fade_color_connect': {
         'Game_setting': {
             'width': GAME_WIDTH,
