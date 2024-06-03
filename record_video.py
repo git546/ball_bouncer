@@ -129,8 +129,7 @@ def run_game_and_create_audio(video_filename='game_video.avi', output_audio='gam
         print("No collision times recorded.")
         
     Video_Title = generate_video_title(game, audio_type)
-    return Video_Title, video_duration
-
+    return Video_Title
 def merge_audio_video(audio_filename='game_audio.mp3', video_filename='game_video.avi', output_filename='final_output.mp4', video_duration=0):
     command = [
         'ffmpeg',

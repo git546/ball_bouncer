@@ -203,7 +203,7 @@ configurations = {
             'color': MONO_BALL_COLOR,
             'growth': BALL_GROWTH_SHRINK,
             'energy_loss': BALL_ENERGY_LOSS,
-            'gravity': BALL_GRAVITY,
+            'gravity': (0,0),
         },
         'gimmick': {
             'on_init': {
@@ -280,7 +280,7 @@ configurations = {
             'color': UNI_COLOR,
             'growth': BALL_GROWTH_SHRINK,  # 성장률을 0.9로 설정
             'energy_loss': BALL_ENERGY_LOSS,
-            'gravity': BALL_GRAVITY,
+            'gravity': (0,0),
         },
         
         'gimmick': {
@@ -433,7 +433,7 @@ configurations = {
             'color': MONO_BALL_COLOR,
             'growth': BALL_GROWTH_SHRINK,
             'energy_loss': BALL_ENERGY_LOSS,
-            'gravity': BALL_GRAVITY,
+            'gravity': (0,0),
         },
         'gimmick': {
             'on_init': {
