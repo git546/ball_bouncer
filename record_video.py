@@ -1,21 +1,13 @@
 import cv2
 import os
-import random
 import subprocess
 from ball_bounce import Game
-from sound_ctl import add_collision_sounds_based_on_type
+from sound_ctl import add_collision_sounds
 from game_configurations import colors
 
 # Constants for paths and filenames can be set here or read from environment/config
 FFMPEG_PATH = os.environ.get('FFMPEG_PATH', r'C:\ffmpeg-2024-04-10-git-0e4dfa4709-full_build\bin')
 os.environ['PATH'] += os.pathsep + FFMPEG_PATH
-
-def select_random_file(folder):
-    """Given a folder, returns the path of a random file from that folder."""
-    files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
-    if files:
-        return os.path.join(folder, random.choice(files))
-    return None
 
 def get_video_duration(filename):
     """ Return the duration of a video in seconds """
@@ -45,7 +37,6 @@ def convert_collision_frames_to_times(collision_frames, framerate):
     print(f"Converted collision frames to times (ms): {collision_times}")
     return collision_times
 
-
 def trim_video(input_filename, output_filename, video_duration):
     """ Trim the video file to keep the last 60 seconds """
     start_time = max(0, video_duration - 60)  # Ensure start_time is not negative
@@ -61,7 +52,7 @@ def adjust_collision_times(collision_times, cut_time):
     adjusted_times = [time - cut_time for time in collision_times if time > cut_time]
     return adjusted_times
 
-def generate_video_title(game, audio_type):
+def generate_video_title(game):
     # 게임 설정에서 볼과 테두리의 색상을 확인
     ball_color_name = '\b'
     
@@ -82,17 +73,11 @@ def generate_video_title(game, audio_type):
     elif game.ball.growth < 1:
         title_parts.append("Getting Smaller")
 
-    # 사운드 설정에 따라 제목 변경
-    title_parts.append("with")
-    title_parts.append(audio_type)
-
     # 제목 부분을 연결
     return " ".join(title_parts)
 
 def run_game_and_create_audio(video_filename='game_video.avi', output_audio='game_audio.mp3',
                               clip_length_ms=1000, target_duration=75):
-    
-    audio_type = random.choice(['music', 'effect'])
     
     while True:
         print("Starting game...")
@@ -118,18 +103,14 @@ def run_game_and_create_audio(video_filename='game_video.avi', output_audio='gam
         adjusted_collision_times = adjust_collision_times(collision_times, max(0, video_duration - 60) * 1000)
         print(f"Adjusted collision times: {adjusted_collision_times}")
         
-        folder = 'music' if audio_type == 'music' else 'effect'
-        collision_sound_path = select_random_file(folder)
-        if collision_sound_path:
-            add_collision_sounds_based_on_type(adjusted_collision_times, collision_sound_path, output_audio, audio_type, clip_length_ms, video_duration * 1000)
-            print(f"Audio file created: {output_audio}")
-        else:
-            print("No audio file found in the specified folder.")
+        add_collision_sounds(adjusted_collision_times, output_audio, clip_length_ms, video_duration * 1000)
+        print(f"Audio file created: {output_audio}")
     else:
         print("No collision times recorded.")
         
-    Video_Title = generate_video_title(game, audio_type)
-    return Video_Title
+    Video_Title = generate_video_title(game)
+    return Video_Title, video_duration
+
 def merge_audio_video(audio_filename='game_audio.mp3', video_filename='game_video.avi', output_filename='final_output.mp4', video_duration=0):
     command = [
         'ffmpeg',
