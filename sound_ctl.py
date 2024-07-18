@@ -14,7 +14,7 @@ AudioSegment.ffmpeg = os.path.join(FFMPEG_PATH, "ffmpeg")
 AudioSegment.ffprobe = os.path.join(FFMPEG_PATH, "ffprobe")
 
 # FluidSynth 설정 (사운드폰트 경로 설정 필요)
-SOUNDFONT_PATH = 'FluidR3_GM.sf2'  # 사운드폰트 파일 이름만 지정 (같은 폴더에 둠)
+SOUNDFONT_PATH = r'C:\Users\SCHOOL\Desktop\ball_bouncer\FluidR3_GM.sf2'  # 사운드폰트 파일 절대 경로
 FLUIDSYNTH_PATH = r'C:\fluidsynth-2.3.5-win10-x64\bin'  # fluidsynth.exe 경로 설정
 
 # 환경 변수에 fluidsynth 경로 추가

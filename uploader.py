@@ -9,6 +9,7 @@ from google.auth.transport.requests import Request
 
 # YouTube API를 사용하기 위한 스코프 지정
 SCOPES = ['https://www.googleapis.com/auth/youtube.upload']
+client_secret_files = [r'C:\Users\SCHOOL\Desktop\ball_bouncer\client_secrets.json']
 
 def authenticate(client_secret_files, token_file='token.pkl'):
     credentials = None
@@ -36,6 +37,7 @@ def authenticate(client_secret_files, token_file='token.pkl'):
     # 크레덴셜이 없거나 유효하지 않은 경우 새로 인증
     if not credentials:
         for client_secrets_file in client_secret_files:
+            print(f"Trying to authenticate using: {client_secrets_file}")
             try:
                 flow = InstalledAppFlow.from_client_secrets_file(client_secrets_file, SCOPES)
                 credentials = flow.run_local_server(port=0)
@@ -71,9 +73,10 @@ def upload_video(youtube, file_path, title, description, category_id, keywords):
         if error.resp.status in [403, 429]:
             print("Quota exceeded error caught. Exiting...")
         else:
+            print(f"An error occurred: {error}")
             raise
 
 if __name__ == '__main__':
-    client_secret_files = ['client_secrets.json']
+    client_secret_files = [r'C:\Users\SCHOOL\Desktop\ball_bouncer\client_secrets.json']
     youtube = authenticate(client_secret_files)
     upload_video(youtube, 'final_output.mp4', 'My YouTube Short', 'This is a short video.', '22', 'funny, short video')
